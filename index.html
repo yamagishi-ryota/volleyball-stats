@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#071a30">
+<meta name="description" content="選手別のスパイク・レシーブ・サーブをワンタップで記録し、ローテーションを管理するバレー成績チェッカー">
+<title>VOLLEY TRACK｜バレー成績チェッカー</title>
+<style>
+:root{color-scheme:light;--navy:#0b2340;--navy2:#193b57;--teal:#087d73;--blue:#4779b8;--amber:#c98924;--pink:#bb495c;--light:#f1f5f8;--border:#dce5ed;--shadow:0 8px 25px #0b2c4c18}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,sans-serif;color:#10283b;background:#e9eff5}
+button,input,select{font:inherit} button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:disabled{cursor:not-allowed;opacity:.36}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #37cab7;outline-offset:2px}
+#app{height:100vh;height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;overflow:hidden}
+.topbar{height:59px;display:flex;gap:14px;align-items:center;justify-content:space-between;padding:0 18px;background:linear-gradient(108deg,#081c32,#16405b);color:#fff}
+.brand{display:flex;gap:10px;min-width:0;align-items:center}.logo{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#ffffff19;font-size:20px;flex-shrink:0}.brand-title{font-size:19px;font-weight:950;letter-spacing:.04em;white-space:nowrap}.brand-title span{font-size:11px;font-weight:700;color:#adcfdb;letter-spacing:0}.topright{display:flex;align-items:center;gap:9px;min-width:0}.topright input{height:32px;background:#ffffff13;border:1px solid #ffffff42;border-radius:8px;padding:0 8px;color:#fff;font-size:12px;min-width:0}.topright #opponent{width:147px}.topright #matchDate{width:131px;color-scheme:dark}.topright input::placeholder{color:#c7d7e0}.indicator{border:1px solid #55c4b66c;border-radius:99px;padding:6px 9px;color:#b5efe5;font-size:10px;font-weight:800;white-space:nowrap}
+.toolbar{display:flex;align-items:center;justify-content:space-between;min-height:52px;gap:8px;padding:6px 14px;background:#fff;border-bottom:1px solid #dce6eb}.toolgroup{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:nowrap}.tool{height:37px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 12px;border:1px solid #dae4eb;border-radius:10px;background:#f6f9fb;color:#20425c;font-size:12px;font-weight:850;white-space:nowrap;line-height:1.1}.tool:hover{background:#e9f2f5}.tool.primary{background:#0a8276;color:#fff;border-color:#0a8276;box-shadow:0 2px 0 #05554d}.tool.primary:active{transform:translateY(1px);box-shadow:0 1px 0 #05554d}.tool.minor{padding:0 9px}.set-select{width:92px;height:37px;border:1px solid #bfd5dd;background:#eef6f7;border-radius:10px;padding:0 6px;color:#164759;font-size:12px;font-weight:900}
+.workspace{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(235px,25vw,340px);gap:12px;padding:10px 14px 8px;overflow:hidden}
+.court-panel{min-height:0;display:flex;flex-direction:column;border:1px solid #c5dee1;border-radius:17px;overflow:hidden;background:linear-gradient(145deg,#e6f7f3,#d9ece8);box-shadow:var(--shadow)}
+.court-header{height:33px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;color:#20584f}.court-name{font-size:12px;font-weight:950;letter-spacing:.08em}.court-note{font-size:10px;font-weight:800;color:#54877e}.net{height:10px;flex-shrink:0;border-top:3px dashed #719d98;border-bottom:1px solid #a9ceca;margin:0 12px 7px;position:relative}.net:after{content:"NET";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#e4f5f0;color:#6b988f;padding:0 9px;font-size:8px;letter-spacing:.15em;font-weight:900}
+.court-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px;padding:0 10px 10px}
+.player-card{min-height:0;min-width:0;display:grid;grid-template-rows:minmax(0,1fr) auto minmax(0,.95fr);background:#fff;border:1px solid #d8e3e9;border-radius:13px;box-shadow:0 3px 9px #21504d12;overflow:hidden;position:relative}
+.player-card.serving{border:2px solid #d5a947;box-shadow:0 0 0 2px #eac97055}
+.player-card.empty{display:flex;align-items:center;justify-content:center;background:#ffffff8c;color:#667c83;font-weight:700;font-size:12px}
+.zone-4{grid-area:1/1}.zone-3{grid-area:1/2}.zone-2{grid-area:1/3}.zone-5{grid-area:2/1}.zone-6{grid-area:2/2}.zone-1{grid-area:2/3}
+.stat-block{min-height:0;display:flex;flex-direction:column;padding:5px 8px 7px;background:#f4f8fd}.stat-block.receive{background:#edf9f5}.block-head{display:flex;justify-content:space-between;gap:6px;align-items:center;min-height:16px;font-size:10px;font-weight:900;color:#557591}.receive .block-head{color:#35816f}.tiny-hint{font-size:9px;font-weight:650;color:#8a9ea9}.action-row{flex:1;min-height:0;display:grid;gap:4px;margin-top:4px}.action-row.five{grid-template-columns:repeat(5,minmax(0,1fr))}.action-row.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.act{border:0;border-radius:8px;padding:3px 1px;min-width:0;min-height:29px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;color:#fff;font-weight:900;box-shadow:inset 0 -3px 0 #00000011;line-height:1;user-select:none}.act:active{transform:scale(.94)}.act.flash{animation:blink .22s ease}.act span{font-size:clamp(9px,1vw,12px);white-space:nowrap;letter-spacing:-.04em}.act small{font-size:10px;line-height:1;font-weight:700;opacity:.95;font-variant-numeric:tabular-nums}.act.hit{background:#2f6fdf}.act.decide{background:#14a44d}.act.point{background:#8a3ffc}.act.touch{background:#f08c00}.act.grade-A{background:#00a389}.act.grade-B{background:#3b82f6}.act.grade-C{background:#d97706}.act.ace{background:#0f9d8a}.act.effect{background:#7c3aed}.act.no{background:#b08900}.act.miss{background:#d6455d}.act.serves-attempt{background:#556987}
+@keyframes blink{50%{filter:brightness(1.4);transform:scale(.92)}}
+.player-id{height:46px;min-height:35px;display:flex;align-items:center;gap:7px;padding:4px 8px;border-top:1px solid #e4ecf2;border-bottom:1px solid #e4ecf2;background:#fff}.zone-num{font-size:9px;flex:0 0 auto;font-weight:900;color:#668596;align-self:flex-start;padding-top:2px}.number{background:var(--navy);border-radius:7px;min-width:31px;height:31px;padding:0 3px;display:grid;place-items:center;color:#fff;font-weight:950;font-size:14px;flex-shrink:0}.player-detail{flex:1;min-width:0}.player-name{font-size:clamp(12px,1.3vw,16px);font-weight:950;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.player-role{font-size:9px;color:#427c83;font-weight:950;margin-top:1px}.serve-chip{font-size:9px;font-weight:950;border-radius:5px;background:#fff2c2;color:#99651d;padding:4px;white-space:nowrap}
+.sidebar{display:flex;flex-direction:column;min-height:0;gap:12px}
+.side-panel{border:1px solid #d8e4eb;border-radius:17px;background:white;padding:14px;box-shadow:var(--shadow);min-width:0}.side-title{font-size:13px;font-weight:950;color:#193d58}.summary{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}.summary-head{display:flex;justify-content:space-between;align-items:center}.set-mark{font-size:11px;font-weight:850;color:#398f84;background:#e9f8f3;padding:6px 9px;border-radius:8px}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{border:1px solid #e8eef2;background:#f4f8fa;border-radius:10px;padding:11px 9px}.metric label{font-size:10px;color:#5f8091;font-weight:800}.metric strong{display:block;font-size:23px;color:#163b51;font-weight:950;margin-top:1px}.recent{margin-top:auto;background:#f0f6f8;border-radius:10px;padding:10px;font-size:11px;color:#456474;line-height:1.5;min-height:54px}.recent strong{display:block;color:#21516b;margin-bottom:3px}.summary-guide{font-size:10px;line-height:1.6;color:#718899}
+.serve-panel{flex-shrink:0;background:linear-gradient(135deg,#fbf9f2,#f6f3e6);border-color:#e4d8b9}.serve-head{display:flex;justify-content:space-between;align-items:center;gap:7px}.server-select{max-width:145px;min-width:0;border:1px solid #dec995;border-radius:9px;padding:6px 5px;background:#fff;color:#66491c;font-size:11px;font-weight:850}.serve-note{color:#8b754c;font-size:10px;line-height:1.5;margin-top:7px}.serve-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:12px}.serve-actions .act{min-height:65px;border-radius:10px}.serve-actions .act span{font-size:11px}.serve-actions .act small{font-size:12px}
+.footer{min-height:36px;padding:4px 14px;background:#fff;border-top:1px solid #dbe6eb;display:flex;align-items:center;justify-content:space-between;gap:10px;color:#5c7689;font-size:10px}.footer-left{display:flex;align-items:center;gap:12px;min-width:0}.footer .last{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.footer .right{white-space:nowrap}.footer button{padding:5px 10px;background:#eff5f8;color:#345468;border:1px solid #dbe5ec;border-radius:7px;font-size:10px;font-weight:800}
+.modal{width:min(1100px,95vw);max-width:95vw;max-height:92dvh;border:1px solid #cadce6;border-radius:17px;padding:0;background:#fff;box-shadow:0 30px 75px #00152e7a;color:#18364a}.modal::backdrop{background:#0c1d30aa}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 17px;background:#0f2c43;color:white}.modal-head h2{font-size:16px;margin:0}.modal-close{width:32px;height:32px;background:#ffffff1d;border:1px solid #ffffff35;color:white;border-radius:8px;font-size:18px}.modal-body{padding:16px;max-height:calc(92dvh - 65px);overflow:auto}.modal-desc{font-size:12px;color:#637e8d;line-height:1.6;margin:0 0 11px}.roster-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.edit-row{display:grid;grid-template-columns:55px minmax(0,1fr) 70px 32px;align-items:center;gap:6px}.edit-row input,.edit-row select,.court-slot select{width:100%;min-width:0;border:1px solid #cfdee8;border-radius:7px;padding:8px;background:#fff;font-size:12px}.remove-edit{border:1px solid #efcfd4;border-radius:7px;background:#fff0f1;color:#a33f50;height:35px}.section-divider{height:1px;background:#dfe7ed;margin:15px 0}.section-subhead{font-size:13px;font-weight:950;margin:0 0 9px}.court-editor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.court-slot{background:#edf7f4;border:1px solid #d6e7e1;border-radius:9px;padding:8px}.court-slot label{display:block;font-size:10px;font-weight:850;color:#507f74;margin-bottom:5px}.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:flex-end}.modal-actions button,.modal-btn{padding:9px 13px;border:1px solid #d2dfe7;border-radius:9px;background:#eef4f7;font-size:12px;font-weight:850;color:#28465b}.modal-btn.primary{background:#0d897b;border-color:#0d897b;color:#fff}.modal-btn.danger{color:#ad3f4b;border-color:#e9c8ce;background:#fff0f2}
+.table-wrap{overflow:auto;border:1px solid #dfe9ee;border-radius:9px;max-height:49dvh}.stats-table{border-collapse:collapse;width:100%;min-width:1050px;font-size:11px;white-space:nowrap}.stats-table th{position:sticky;top:0;background:#eaf2f5;color:#31576c;border:1px solid #dce8ee;padding:8px 7px}.stats-table td{border-bottom:1px solid #e5edf1;padding:8px 7px;text-align:center}.stats-table td:first-child{text-align:left;font-weight:850}.stats-table tfoot td{background:#e4f6ed;font-weight:900}.scope-switch{display:flex;align-items:center;gap:6px;margin-bottom:11px}.scope-switch button{padding:7px 11px;border:1px solid #d9e3ea;background:#fff;border-radius:7px;font-size:11px;font-weight:850}.scope-switch button.active{background:#0d746f;color:#fff;border-color:#0d746f}.history-list{margin-top:15px;max-height:150px;overflow:auto;border-top:1px solid #e0e9ed}.history-row{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e7edf0;font-size:12px}.history-row b{margin-left:auto;color:#256e67}.history-delete{border:1px solid #efccd4;background:#fff5f5;color:#b04b59;border-radius:6px;width:30px;height:26px}.toast{position:fixed;z-index:20;left:50%;bottom:48px;transform:translate(-50%,10px);background:#102f47;color:white;border-radius:9px;padding:10px 15px;font-size:12px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .16s,transform .16s;max-width:90vw;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:1050px){.workspace{grid-template-columns:minmax(0,1fr) 222px;gap:7px;padding:7px}.court-grid{gap:6px;padding:0 6px 6px}.stat-block{padding:4px 5px 5px}.action-row{gap:3px}.player-id{padding:4px 5px}.side-panel{padding:10px}.serve-actions{gap:3px}.serve-actions .act span{font-size:9px}}
+@media(max-width:850px) and (orientation:portrait){
+ .topbar{height:44px;padding:0 9px;gap:5px}.logo{width:28px;height:28px;font-size:15px}.brand{gap:5px}.brand-title{font-size:14px;letter-spacing:0}.brand-title span{display:none}.topright{gap:5px}.topright #opponent{display:none}.topright #matchDate{width:113px;height:28px;font-size:10px}.indicator{display:none}
+ .toolbar{min-height:45px;padding:4px 5px;gap:4px}.toolgroup{gap:4px}.tool{height:34px;padding:0 6px;border-radius:7px;font-size:10px;gap:2px}.tool.minor{padding:0 5px}.set-select{height:34px;width:80px;font-size:10px}.hide-mobile{display:none}
+ .workspace{display:flex;flex-direction:column;gap:5px;padding:5px;overflow:hidden}
+ .court-panel{flex:1;min-height:0;border-radius:9px}.court-header{height:20px;padding:0 7px}.court-name{font-size:9px}.court-note{font-size:8px}.net{height:4px;border-top-width:1px;margin:0 6px 3px}.net:after{display:none}
+ .court-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:4px;padding:0 4px 4px}
+ .zone-4{grid-area:1/1}.zone-3{grid-area:1/2}.zone-5{grid-area:2/1}.zone-2{grid-area:2/2}.zone-6{grid-area:3/1}.zone-1{grid-area:3/2}
+ .player-card{border-radius:8px}.stat-block{padding:2px 4px 3px}.block-head{min-height:12px;font-size:8px}.tiny-hint{font-size:7px}.action-row{gap:2px;margin-top:2px}.act{border-radius:5px;min-height:23px;gap:2px}.act span{font-size:9px}.act small{font-size:9px}.player-id{height:30px;min-height:26px;padding:2px 4px;gap:4px}.zone-num{font-size:7px;padding-top:1px}.number{min-width:23px;height:23px;font-size:10px;border-radius:5px}.player-name{font-size:11px}.player-role{font-size:8px;margin:0}.serve-chip{font-size:7px;padding:3px}
+ .sidebar{flex:0 0 auto;gap:0}.summary{display:none}.serve-panel{padding:5px 7px;border-radius:9px}.side-title{font-size:10px}.serve-head{gap:3px}.server-select{max-width:155px;padding:3px 4px;font-size:10px;border-radius:6px}.serve-note{display:none}.serve-actions{gap:4px;margin-top:5px}.serve-actions .act{min-height:36px;border-radius:6px}.serve-actions .act span{font-size:10px}.serve-actions .act small{font-size:9px}
+ .footer{min-height:28px;padding:3px 6px;font-size:9px;gap:4px}.footer-left{gap:6px}.footer .right{display:none}.footer button{padding:4px 6px;font-size:9px}.toast{bottom:32px}
+}
+@media(max-height:700px) and (min-width:741px){.topbar{height:46px}.toolbar{min-height:43px;padding-top:3px;padding-bottom:3px}.tool,.set-select{height:32px}.workspace{padding-top:5px;padding-bottom:4px}.court-header{height:25px}.net{height:6px;margin-bottom:4px}.stat-block{padding-top:3px;padding-bottom:4px}.block-head{min-height:13px}.player-id{height:34px;min-height:30px}.number{min-width:26px;height:26px;font-size:11px}.serve-actions .act{min-height:48px}.side-panel{padding:9px}.summary{gap:7px}.metric{padding:7px}.metric strong{font-size:19px}.recent{padding:6px;min-height:37px}.footer{min-height:30px}}
+@media(max-height:650px) and (max-width:850px) and (orientation:portrait){.topbar{height:38px}.toolbar{min-height:38px}.tool,.set-select{height:30px}.court-header{height:18px}.player-id{height:24px;min-height:22px}.number{min-width:20px;height:20px}.act span{font-size:8px}.act small{font-size:8px}.serve-actions .act{min-height:31px}.footer{min-height:24px}}
+@media(max-height:520px) and (max-width:850px) and (orientation:portrait){.block-head{display:none}.stat-block{padding:1px 3px}.action-row{margin-top:0}.act{min-height:20px}.player-id{height:21px;min-height:19px}.number{min-width:17px;height:18px}.player-role{display:none}}
+@media(max-width:340px) and (orientation:portrait){.action-row.five .act span{font-size:7px}}
+@media(max-height:450px) and (orientation:landscape){.topbar{height:38px}.toolbar{min-height:35px}.tool,.set-select{height:29px}.workspace{padding:3px}.court-header{height:17px}.net{height:3px;margin-bottom:2px}.court-grid{gap:3px;padding:0 4px 4px}.stat-block{padding:1px 3px}.block-head{min-height:10px;font-size:8px}.act{min-height:19px}.act span{font-size:9px}.act small{font-size:8px}.player-id{height:25px;min-height:21px}.number{min-width:21px;height:21px;font-size:10px}.player-name{font-size:10px}.player-role{font-size:7px}.sidebar{gap:4px}.summary{gap:3px}.side-panel{padding:5px}.metrics{gap:3px}.metric{padding:3px}.metric label{font-size:8px}.metric strong{font-size:15px}.recent,.summary-guide{display:none}.serve-actions{margin-top:4px;gap:2px}.serve-actions .act{min-height:29px}.serve-note{font-size:8px;margin-top:3px}.footer{min-height:22px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* V4: live screen, compact match operations */
+[hidden]{display:none!important}
+.view-toggle{background:#ecf3f6;border-color:#bcd0d9;color:#295165}.view-toggle.active{background:#123954;color:white;border-color:#123954}
+.workspace{grid-template-columns:minmax(0,1fr) clamp(274px,27vw,360px);gap:8px;padding:8px 10px 6px}
+.sidebar{gap:7px}
+.side-panel{padding:9px;border-radius:12px}
+.squad-panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:4px;background:linear-gradient(145deg,#fff,#f5f9fc)}
+.squad-title{display:flex;justify-content:space-between;gap:4px;align-items:center}
+.mini-guide,.score-help{font-size:9px;color:#73909f;font-weight:750;white-space:nowrap}
+.squad-section-label{font-size:10px;font-weight:950;color:#527189;line-height:1.1;display:flex;align-items:center;gap:5px}
+.squad-section-label b{font-size:9px;background:#e8f0f6;border-radius:5px;padding:1px 4px}
+.squad-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));min-height:0;flex:2.3;gap:4px}
+.libero-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));min-height:0;flex:1;gap:4px}
+.squad-member{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;text-align:left;padding:4px 6px;border:1px solid #dbe7ec;border-radius:7px;background:#edf4f8;min-width:0;min-height:0;color:#244558;font-weight:800}
+.squad-member strong{font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;display:block;max-width:100%}.squad-member small{font-size:9px;opacity:.7;white-space:nowrap}.squad-member:active{transform:scale(.97)}.squad-member.libero{background:#e5f4ef;border-color:#cde4dd}.squad-member.active-player{background:#fff0d8;border-color:#eec782}.squad-member.empty-slot{opacity:.7;border-style:dashed}
+.score-panel{flex-shrink:0;background:linear-gradient(135deg,#f2f8fc,#fdfefe);padding:8px 9px}.score-head{display:flex;justify-content:space-between;align-items:center;gap:5px;margin-bottom:5px}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.score-team{min-width:0;padding:4px 6px;border-radius:9px;border:1px solid #d8e8ec;background:#eff7f7}.score-team.theirs{background:#fff5f2;border-color:#f1ddd5}.score-label{display:block;text-align:center;font-size:10px;font-weight:900;color:#587380;line-height:1.1}
+.score-actions{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:4px;align-items:center}.score-actions strong{text-align:center;font-size:clamp(22px,2.2vw,30px);line-height:1.15;color:#135970;font-variant-numeric:tabular-nums}.score-team.theirs strong{color:#ac5160}.score-actions button{width:30px;height:30px;padding:0;border:1px solid #cddde4;border-radius:7px;background:#fff;color:#173e57;font-size:19px;font-weight:850;line-height:1}.score-actions button:active{background:#bce8dc}
+.serve-panel{padding:9px}.serve-actions{margin-top:6px;gap:4px}.serve-actions .act{min-height:45px;border-radius:8px}.serve-note{font-size:9px;margin-top:4px}
+.swap-modal{width:min(580px,94vw)}.swap-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.swap-item{min-width:0;background:#edf7f4;border:1px solid #cfe1dc;border-radius:9px;padding:11px;font-weight:850;color:#234c50}.swap-item strong{display:block;font-size:12px}.swap-item small{font-size:10px}
+.live-screen{min-height:0;display:flex;flex-direction:column;gap:9px;padding:12px 16px 10px;overflow:hidden}.live-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto}.live-eyebrow{font-size:9px;font-weight:950;color:#448f84;letter-spacing:.16em}.live-top h2{font-size:clamp(17px,2vw,23px);margin:2px 0;color:#123954}.live-top h2 span{font-size:11px;background:#e1f3ed;padding:5px 8px;border-radius:6px;color:#287367;vertical-align:middle}.live-top-right{display:flex;align-items:center;gap:12px}.live-score{font-size:16px;font-weight:950;white-space:nowrap;color:#1b5364}.live-scope{display:flex;gap:4px}.live-scope button{font-size:11px;font-weight:850;border:1px solid #cbdde4;padding:7px 9px;border-radius:7px;background:white;color:#4d7081}.live-scope button.active{color:white;background:#0b8074;border-color:#0b8074}
+.live-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;flex:0 0 auto}.live-kpi{border:1px solid #dbe6ed;background:white;border-radius:11px;padding:11px 12px;min-width:0;box-shadow:0 3px 12px #17415b0a}.live-kpi span{display:block;font-size:10px;font-weight:850;color:#587689;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.live-kpi strong{display:block;margin-top:4px;font-size:clamp(20px,2.2vw,31px);color:#173f5a;font-weight:950;font-variant-numeric:tabular-nums}
+.live-main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:9px;min-height:0;flex:1}.live-table-panel,.live-insight-panel{min-height:0;border:1px solid #dce6ee;background:white;border-radius:12px;padding:11px;box-shadow:0 5px 18px #173b590b;display:flex;flex-direction:column}.live-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:4px;font-size:11px;font-weight:950;color:#234b61;margin-bottom:9px;flex-shrink:0}.live-card-head span{font-size:9px;color:#8aa1ab;white-space:nowrap}.live-table-wrap{flex:1;min-height:0;overflow:hidden}.live-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}.live-table th{font-size:10px;color:#637f91;background:#f1f6f9;white-space:nowrap;padding:7px 3px;text-align:center}.live-table th:first-child{text-align:left;width:32%;padding-left:7px}.live-table td{border-bottom:1px solid #edf2f5;padding:6px 3px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}.live-table td:first-child{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:7px}.live-table td:first-child small{font-size:9px;color:#819ba3}.live-table td:nth-child(3){color:#07877a}.live-table-foot{margin-top:auto;padding-top:7px;color:#8aa0ad;font-size:9px;flex:0 0 auto}.live-insights{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) minmax(0,.75fr);gap:9px}.breakdown{display:flex;flex-direction:column;justify-content:space-around;gap:11px;flex:1}.break-row{display:grid;grid-template-columns:81px 1fr 30px;align-items:center;gap:7px;font-size:10px;color:#52768a;font-weight:850}.break-track{height:12px;background:#e8eff4;border-radius:8px;overflow:hidden}.break-fill{height:100%;background:#188c7e;border-radius:8px;min-width:0}.break-row:nth-child(2) .break-fill{background:#4a81af}.break-row:nth-child(3) .break-fill{background:#cb9a47}.break-row:nth-child(4) .break-fill{background:#cf6a78}.live-feed{min-height:0;flex:1;display:flex;flex-direction:column;gap:2px;overflow:hidden}.feed-line{display:flex;gap:7px;align-items:center;font-size:10px;color:#557387;white-space:nowrap;padding:6px 4px;border-bottom:1px solid #edf3f5}.feed-line b{color:#22495e;margin-left:auto}.feed-line span{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1100px){.workspace{grid-template-columns:minmax(0,1fr) 265px}.side-panel{padding:7px}.squad-member{padding:3px 4px}.squad-member strong{font-size:10px}.score-actions{grid-template-columns:26px minmax(0,1fr) 26px}.score-actions button{width:26px;height:26px}.serve-actions .act{min-height:40px}.live-kpis{gap:5px}.live-kpi{padding:8px}.live-card-head span{display:none}}
+@media(max-width:850px) and (orientation:portrait){
+ .toolbar .toolgroup:last-child{gap:2px}.toolbar .view-toggle{padding:0 5px}.toolbar #openStats{padding:0 5px}
+ .workspace{gap:4px;padding:4px}.sidebar{gap:3px}.squad-panel{flex:none;gap:2px;padding:4px 6px}.squad-title .side-title{font-size:10px}.mini-guide{font-size:8px}.squad-section-label{font-size:8px}.squad-grid{flex:none;grid-template-rows:repeat(2,24px);gap:2px}.libero-grid{flex:none;grid-template-columns:repeat(2,minmax(0,1fr));height:24px;gap:2px}.squad-member{padding:1px 5px;border-radius:5px;flex-direction:row;align-items:center;justify-content:center;gap:3px}.squad-member strong{font-size:9px}.squad-member small{font-size:8px}.score-panel{padding:3px 5px}.score-head{margin:0 0 2px}.score-head .side-title{font-size:10px}.score-help{font-size:8px}.score-grid{gap:4px}.score-team{padding:2px 3px;border-radius:6px}.score-label{font-size:8px}.score-actions{grid-template-columns:26px 1fr 26px;gap:2px}.score-actions button{width:26px;height:24px;font-size:17px}.score-actions strong{font-size:20px}.serve-panel{padding:4px 6px}.serve-head .side-title{font-size:10px}.server-select{font-size:9px;padding:2px}.serve-note{display:none}.serve-actions{margin-top:3px}.serve-actions .act{min-height:30px}.serve-actions .act span{font-size:9px}.serve-actions .act small{font-size:8px}
+ .live-screen{padding:6px;gap:5px}.live-top h2{font-size:13px;margin:0}.live-eyebrow{font-size:8px}.live-score{font-size:11px}.live-top-right{flex-direction:column;align-items:end;gap:2px}.live-scope button{font-size:9px;padding:3px 6px}.live-kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}.live-kpi{padding:4px 6px;border-radius:7px}.live-kpi span{font-size:8px}.live-kpi strong{margin-top:0;font-size:17px}.live-main{display:flex;flex-direction:column;gap:0}.live-table-panel{flex:1;padding:6px;border-radius:8px}.live-insights{display:none}.live-card-head{font-size:10px;margin-bottom:3px}.live-table th{font-size:8px;padding:4px 1px}.live-table td{font-size:10px;padding:4px 1px}.live-table th:first-child{width:32%;padding-left:2px}.live-table td:first-child{padding-left:2px}.live-table tr:nth-child(n+9){display:none}.live-table-foot{font-size:8px;padding-top:3px}
+}
+@media(max-height:720px) and (min-width:851px){.squad-panel{gap:2px}.squad-member strong{font-size:10px}.squad-member small{font-size:8px}.score-panel{padding:5px 8px}.score-actions button{height:24px}.score-actions strong{font-size:22px}.serve-panel{padding:6px 8px}.serve-actions .act{min-height:35px}.serve-note{display:none}.live-kpi{padding:6px}.live-table td{padding:4px 2px}.live-screen{padding:7px 10px;gap:5px}}
+@media(max-height:610px) and (max-width:850px) and (orientation:portrait){.squad-grid{grid-template-rows:repeat(2,19px)}.libero-grid{height:19px}.squad-title .side-title{font-size:9px}.squad-section-label{font-size:7px}.squad-member small{display:none}.score-head{display:none}.score-actions button{height:20px}.score-actions strong{font-size:17px}.score-label{font-size:7px}.serve-actions .act{min-height:24px}.serve-head{height:19px}.live-kpi strong{font-size:14px}.live-table td{padding:2px 1px}}
+@media(max-height:470px) and (orientation:landscape){.squad-panel{gap:1px;padding:3px}.squad-title{display:none}.squad-grid{grid-template-rows:repeat(2,minmax(0,1fr));gap:2px}.libero-grid{gap:2px}.squad-section-label{font-size:8px}.squad-member strong{font-size:8px}.squad-member small{display:none}.score-head{display:none}.score-panel{padding:3px}.score-grid{gap:2px}.score-label{display:none}.score-team{padding:1px}.score-actions{grid-template-columns:20px 1fr 20px;gap:1px}.score-actions button{width:20px;height:18px;font-size:13px}.score-actions strong{font-size:16px}.serve-note{display:none}.serve-actions .act{min-height:20px}.live-kpi{padding:3px}.live-kpi strong{font-size:16px}.live-main{grid-template-columns:1.5fr 1fr}.live-table td{padding:2px 1px}}
+
+
+#app{grid-template-columns:minmax(0,1fr)}.topbar,.toolbar,.workspace,.footer{min-width:0}.court-panel,.court-grid,.sidebar{min-width:0;width:100%}
+@media(max-width:850px) and (orientation:portrait){.toolbar{overflow:hidden}.toolbar .toolgroup{min-width:0}.toolbar #rotate{font-size:0;width:35px;min-width:35px;padding:0}.toolbar #rotate::after{content:"↻";font-size:20px}.toolbar #rotateBack{padding:0 4px}.toolbar #addSet{padding:0 5px}.toolbar #recordTab{font-size:9px}.toolbar #liveTab{font-size:9px}.toolbar #editPlayers{font-size:10px}.toolbar #openTools{padding:0 4px}.toolbar .set-select{width:67px}.toolbar .toolgroup:last-child{flex-shrink:0}}
+@media(max-width:370px) and (orientation:portrait){.toolbar #rotateBack{display:none}.toolbar #recordTab{font-size:8px;padding:0 4px}.toolbar #liveTab{font-size:8px;padding:0 4px}.toolbar #editPlayers{padding:0 4px}.toolbar #openStats{padding:0 3px}.toolbar #openTools{padding:0 3px}.topright #matchDate{width:103px}}
+
+@media(max-width:850px) and (orientation:portrait){.live-top>div:first-child{min-width:0;flex:1}.live-top h2{font-size:12px;line-height:1.22}.live-top h2 span{font-size:9px;padding:2px 4px}.live-top-right{flex:0 0 auto;max-width:48%}.live-score{font-size:10px}.live-table th:last-child,.live-table td:last-child{font-size:8px}}
+@media(max-width:850px) and (orientation:portrait) and (max-height:730px){.court-header{height:16px}.net{height:2px;margin-bottom:2px}.court-grid{gap:3px}.player-card{grid-template-rows:minmax(0,1fr) auto minmax(0,1fr)}.block-head{display:none}.stat-block{padding:1px 3px}.action-row{margin-top:0;gap:2px}.act{min-height:17px;padding:1px 0;gap:0;box-shadow:none}.act span{font-size:8px}.act small{font-size:8px}.player-id{height:21px;min-height:18px;padding:1px 3px;gap:3px}.number{min-width:19px;height:19px;font-size:9px}.player-name{font-size:10px}.player-role{font-size:7px}.serve-chip{font-size:7px;padding:2px}.zone-num{font-size:7px}}
+@media(max-width:850px) and (orientation:portrait) and (min-height:740px){.live-table tr:nth-child(n+9){display:table-row}}
+
+@media(min-width:851px) and (max-height:850px){.live-table td{padding:3px 2px}.live-card-head{margin-bottom:5px}}
+
+/* Rally-score service indicator & libero exchange controls */
+.score-label.serve-owner-control{width:100%;padding:1px 0;margin:0 0 1px;background:transparent;border:0;cursor:pointer;text-align:center;font:inherit;color:#597482;border-radius:4px;min-height:14px}
+.score-label.serve-owner-control.serving-now{color:#077d6b;font-weight:950;background:#ddf4e9}
+.score-label.serve-owner-control.serving-now::before{content:'🏐 ';font-size:10px}
+.score-team.theirs .serve-owner-control.serving-now{color:#9c4857;background:#ffe3db}
+.libero-tile{display:flex;align-items:stretch;gap:3px;min-width:0;min-height:0;height:100%;cursor:pointer}
+.libero-tile .squad-member{flex:1;min-width:0;padding:3px 4px}
+.libero-swap-btn{flex:0 0 36px;min-width:0;border:1px solid #a9d6c8;border-radius:6px;background:#0a8575;color:white;font-size:10px;font-weight:950;padding:1px 2px;cursor:pointer;touch-action:manipulation}
+.libero-swap-btn.active{background:#b27c27;border-color:#a87729}
+.squad-member.libero.active-player{background:#fff0d8}
+@media(max-width:850px) and (orientation:portrait){
+ .libero-tile{flex-direction:column;gap:1px}
+ .libero-tile .squad-member{width:100%;flex:1;padding:0 1px;justify-content:center}
+ .libero-tile .squad-member strong{font-size:8px}
+ .libero-tile .squad-member small{display:none}
+ .libero-swap-btn{flex:none;width:100%;height:12px;border-radius:3px;font-size:8px;line-height:10px;padding:0}
+ .score-label.serve-owner-control{font-size:8px;min-height:13px;line-height:1}
+}
+@media(max-height:610px) and (max-width:850px) and (orientation:portrait){.libero-swap-btn{height:10px;font-size:7px;line-height:9px}.score-label.serve-owner-control{min-height:11px}}
+@media(max-height:470px) and (orientation:landscape){.libero-swap-btn{flex-basis:28px;font-size:8px}.score-label.serve-owner-control{font-size:8px;min-height:11px}}
+
+/* V6: libero-exclusive selection and front/back block controls */
+.action-row.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.libero-tile .squad-member.unselected{opacity:.58;filter:grayscale(.18)}
+.libero-tile.libero-selected{border-radius:6px;box-shadow:0 0 0 1px #1f9880}
+.libero-controls{display:flex;flex-direction:column;gap:2px;flex:0 0 39px;min-width:0}
+.libero-select-btn{border:1px solid #b6d3cc;background:#edf5f3;color:#347368;font-size:9px;font-weight:900;border-radius:5px;min-width:0;padding:0 2px;min-height:15px;cursor:pointer}
+.libero-select-btn.selected{background:#067e70;color:white;border-color:#067e70}
+.libero-swap-btn{flex:1 1 auto;min-height:16px;width:100%;border-radius:5px;font-size:9px}
+@media(max-width:850px) and (orientation:portrait){
+ .libero-grid{height:33px}
+ .libero-tile{gap:1px}
+ .libero-tile .squad-member{min-height:11px}
+ .libero-controls{width:100%;height:14px;flex:0 0 14px;flex-direction:row;gap:2px}
+ .libero-select-btn,.libero-swap-btn{flex:1 1 50%;width:50%;min-height:0;height:14px;font-size:8px;line-height:1;padding:0;border-radius:3px}
+}
+@media(max-height:610px) and (max-width:850px) and (orientation:portrait){.libero-grid{height:28px}.libero-controls{height:12px;flex-basis:12px}.libero-select-btn,.libero-swap-btn{height:12px;font-size:7px}}
+@media(max-height:470px) and (orientation:landscape){.libero-controls{flex:0 0 29px}.libero-select-btn,.libero-swap-btn{font-size:7px;min-height:12px}}
+
+/* V7 opponent play counter: always above the scoreboard */
+.opponent-panel{flex:0 0 auto;background:linear-gradient(125deg,#fff8f4,#fff);padding:7px 8px;border-color:#efdcd4}
+.opponent-head{display:flex;justify-content:space-between;align-items:center;gap:3px;margin-bottom:5px}
+.opponent-head .side-title{color:#ab5261;font-size:11px}
+.opponent-help{font-size:8px;color:#9f8890;white-space:nowrap}
+.opponent-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.opponent-stat{display:flex;flex-direction:column;gap:3px;align-items:stretch;border-radius:7px;background:#fff;border:1px solid #f2dedf;min-width:0;padding:3px}
+.opponent-stat-label{font-size:10px;line-height:1.1;text-align:center;color:#8d5362;font-weight:900;white-space:nowrap}
+.opponent-stat-control{display:grid;grid-template-columns:minmax(16px,1fr) minmax(16px,1fr) minmax(16px,1fr);gap:1px;align-items:center}
+.opponent-stat-control button{border:1px solid #ead1d4;background:#fff6f7;color:#a25160;min-width:0;height:23px;border-radius:4px;font-size:14px;line-height:1;font-weight:850;padding:0}
+.opponent-stat-control button.plus{background:#aa5e6d;color:#fff;border-color:#aa5e6d}
+.opponent-stat-control strong{font-size:15px;text-align:center;color:#92394c;font-variant-numeric:tabular-nums;line-height:1}
+@media(max-width:850px) and (orientation:portrait){
+ .opponent-panel{padding:3px 5px;border-radius:8px}
+ .opponent-head{margin-bottom:2px}.opponent-head .side-title{font-size:9px}.opponent-help{font-size:7px}
+ .opponent-grid{gap:3px}.opponent-stat{gap:1px;padding:1px 2px;border-radius:4px}
+ .opponent-stat-label{font-size:8px}.opponent-stat-control button{height:18px;font-size:12px}
+ .opponent-stat-control strong{font-size:12px}
+}
+@media(max-height:640px) and (max-width:850px) and (orientation:portrait){
+ .opponent-head{display:none}.opponent-grid{gap:2px}.opponent-stat{padding:1px}
+ .opponent-stat-label{font-size:7px}.opponent-stat-control button{height:15px;font-size:11px}.opponent-stat-control strong{font-size:11px}
+}
+@media(max-height:460px) and (orientation:landscape){.opponent-panel{padding:3px}.opponent-head{margin-bottom:2px}.opponent-help{display:none}.opponent-stat{padding:1px;gap:1px}.opponent-stat-label{font-size:8px}.opponent-stat-control button{height:16px}.opponent-stat-control strong{font-size:11px}}
+
+/* Protect six player cards on shorter portrait phones without page scrolling. */
+@media(max-width:850px) and (max-height:700px) and (orientation:portrait){
+ .topbar{height:38px}.toolbar{min-height:37px;padding-top:3px;padding-bottom:3px}.tool,.set-select{height:29px}
+ .squad-panel{gap:1px;padding:3px 5px}
+ .squad-grid{grid-template-rows:repeat(2,18px);gap:2px}
+ .libero-grid{height:21px}.squad-section-label{line-height:1;font-size:7px}
+ .squad-title .mini-guide{font-size:7px}.libero-controls{height:11px;flex-basis:11px}
+ .libero-select-btn,.libero-swap-btn{height:11px;font-size:7px}
+ .opponent-head{display:none}
+ .score-head{display:none}.score-panel{padding:2px 4px}.score-team{padding:1px 2px}
+ .score-label{font-size:8px}.score-actions button{height:21px}.score-actions strong{font-size:17px}
+ .serve-head{height:17px}.serve-panel{padding:3px 5px}
+ .serve-actions{margin-top:2px}.serve-actions .act{min-height:24px}
+ .block-head{display:none}.stat-block{padding:1px 3px 2px}.action-row{margin-top:0;gap:2px}
+ .player-id{height:23px;min-height:21px}.act{min-height:18px;gap:1px}
+ .footer{min-height:24px;padding:2px 5px}
+}
+/* V9: one-tap score + and global undo */
+.score-actions{grid-template-columns:minmax(0,1fr) 32px;gap:4px}
+.score-actions button{width:32px}
+@media(max-width:1100px){.score-actions{grid-template-columns:minmax(0,1fr) 28px}.score-actions button{width:28px}}
+@media(max-width:850px) and (orientation:portrait){.score-actions{grid-template-columns:minmax(0,1fr) 26px;gap:2px}.score-actions button{width:26px}}
+@media(max-height:470px) and (orientation:landscape){.score-actions{grid-template-columns:minmax(0,1fr) 21px;gap:1px}.score-actions button{width:21px}}
+#undoBtn{background:#e0f3ec;border:1px solid #80beab;color:#126b5a;font-weight:950}
+#undoBtn:disabled{opacity:.45}
+
+/* Tactical lineup: visual assignment never changes official service rotation. */
+.court-note{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.layout-toggle{flex:none;border:1px solid #83b7ac;border-radius:7px;background:#fff;color:#136656;padding:2px 8px;min-height:23px;font-size:10px;line-height:1;font-weight:950;white-space:nowrap;cursor:pointer}
+.layout-toggle[aria-pressed="false"]{background:#205c60;color:#fff;border-color:#205c60}
+.zone-num{white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:850px) and (orientation:portrait){.court-note{gap:2px}.layout-toggle{font-size:8px;min-height:16px;padding:1px 5px;border-radius:4px}}
+@media(max-height:450px) and (orientation:landscape){.layout-toggle{font-size:8px;min-height:15px;padding:1px 5px}}
+
+/* V12: high-contrast outcome palette (not monotone by play group).
+   Adjacent choices have different hues: blue/green/red/purple/orange
+   for spike & block; teal/ochre/slate/red for receive.
+   All mistakes use exactly the same crimson for instant recognition.
+   Dark tones keep white text WCAG AA-readable on compact buttons. */
+.stat-block.attack{background:#f2f5fa}
+.stat-block.attack .block-head{color:#32536b}
+.stat-block.receive{background:#f0f7f6}
+.stat-block.receive .block-head{color:#325c5b}
+.stat-block.attack .act.hit{background:#1d56bc}          /* スパイク 打数：青 */
+.stat-block.attack .act.decide{background:#16823d}       /* スパイク 決定：緑 */
+.stat-block.attack .act.point{background:#693bb6}        /* ブロック ポイント：紫 */
+.stat-block.attack .act.touch{background:#af5908}        /* ブロック タッチ：オレンジ */
+.stat-block.receive .act.grade-A{background:#007a83}     /* レシーブ A：青緑 */
+.stat-block.receive .act.grade-B{background:#8c6207}     /* レシーブ B：黄土 */
+.stat-block.receive .act.grade-C{background:#52616a}     /* レシーブ C：グレー */
+.stat-block.attack .act.miss,
+.stat-block.receive .act.miss,
+.serve-actions .act.miss{background:#bc2c44}             /* ミスは統一した赤 */
+.serve-actions .act.serves-attempt{background:#355e85}   /* サーブ 打数：濃青 */
+.serve-actions .act.no{background:#716041}               /* サーブ ノー：茶灰 */
+.serve-actions .act.ace{background:#11794a}              /* サーブ エース：緑 */
+.serve-actions .act.effect{background:#6e3cb4}           /* サーブ 効果：紫 */
+
+/* A separate rally-defence error next to the reception error. They share the
+   red error family but differ in intensity to reduce wrong taps. */
+.stat-block.receive .act.dig-miss{background:#921e35}
+.stat-block.receive .action-row.five .act span{font-size:clamp(8px,.87vw,11px)}
+@media(max-width:740px){.stat-block.receive .action-row.five .act span{font-size:8px}}
+
+/* Libero: deliberately blank upper half, only receive controls remain. */
+.stat-block.libero-blank{background:#f4f7f9}
+.opponent-stat-control{grid-template-columns:minmax(0,1fr) 25px;gap:3px}
+.opponent-stat-control strong{text-align:center}
+.opponent-stat-control button.plus{width:25px;justify-self:end}
+@media(max-width:850px) and (orientation:portrait){.opponent-stat-control{grid-template-columns:minmax(0,1fr) 20px;gap:1px}.opponent-stat-control button.plus{width:20px}}
+@media(max-height:460px) and (orientation:landscape){.opponent-stat-control{grid-template-columns:minmax(0,1fr) 20px}.opponent-stat-control button.plus{width:20px}}
+.rate-cell{font-weight:950;color:#0b716d;background:#f2faf6;font-variant-numeric:tabular-nums}
+.rate-guide{border:1px solid #cfe9e0;background:#f0faf6;color:#315a58;border-radius:10px;margin-top:8px;padding:10px 12px;font-size:11px;line-height:1.75}
+.rate-guide strong{display:block;color:#12665d;margin-bottom:3px;font-size:12px}
+.rate-guide small{display:block;color:#657d80;line-height:1.55;margin-top:5px}
+.live-table .rate-cell{font-size:11px}
+@media(max-width:850px){.live-kpi span{letter-spacing:-.055em}.live-table th{white-space:normal;line-height:1.12}.live-table .rate-cell{font-size:9px}}
+</style>
+</head>
+<body>
+<div id="app">
+<header class="topbar"><div class="brand"><span class="logo">🏐</span><div class="brand-title">VOLLEY TRACK <span>／ 成績チェッカー</span></div></div><div class="topright"><input id="opponent" aria-label="対戦相手" maxlength="60" placeholder="対戦相手"><input id="matchDate" type="date" aria-label="試合日"><span class="indicator">● 自動保存</span></div></header>
+<nav class="toolbar" aria-label="試合操作"><div class="toolgroup"><select class="set-select" id="setSelect" aria-label="セットを選択"></select><button class="tool minor" id="addSet" title="新しいセット">＋</button><button class="tool primary" id="rotate" title="時計回りにローテーション">↻ ローテーション</button><button class="tool minor" id="rotateBack" title="逆方向にローテーションする（全操作の取り消しは画面下の「1つ戻す」）">↺ <span class="hide-mobile">逆回転</span></button></div><div class="toolgroup"><button class="tool view-toggle active" id="recordTab" aria-pressed="true">🏐 記録</button><button class="tool view-toggle" id="liveTab" aria-pressed="false">▥ LIVE</button><button class="tool" id="editPlayers">⚙ <span class="hide-mobile">選手・配置</span><span class="mobile-only" style="display:none">選手</span></button><button class="tool" id="openStats">▤ <span class="hide-mobile">詳細</span></button><button class="tool" id="openTools">⋯ <span class="hide-mobile">保存・設定</span></button></div></nav>
+<div class="workspace" id="recordView">
+ <section class="court-panel" aria-label="選手コート"><div class="court-header"><span class="court-name">自チーム コート <span id="rotationCount">／ ローテーション 0回</span></span><span class="court-note"><span class="hide-mobile">ネット側 ↑ ・ 番号はローテ順</span><button type="button" id="layoutToggle" class="layout-toggle" aria-pressed="true" title="役割別の配置とローテーション位置の表示を切り替える">役割配置</button></span></div><div class="net"></div><div class="court-grid" id="courtGrid"></div></section>
+ <aside class="sidebar">
+  <section class="side-panel squad-panel" aria-label="控えとリベロの名簿">
+   <div class="squad-title"><span class="side-title">控え・リベロ</span><span class="mini-guide">タップで選手交代</span></div>
+   <div class="squad-section-label">控え <b>6</b></div><div class="squad-grid" id="benchGrid"></div>
+   <div class="squad-section-label">リベロ <b>使用する1人を「選択」</b></div><div class="libero-grid" id="liberoGrid"></div>
+  </section>
+  <section class="side-panel opponent-panel" aria-label="相手チームのプレー記録">
+   <div class="opponent-head"><span class="side-title">相手チームの記録</span><span class="opponent-help">＋で記録・修正は「1つ戻す」</span></div>
+   <div class="opponent-grid" id="opponentGrid"></div>
+  </section>
+  <section class="side-panel score-panel" aria-label="得点カウンター">
+   <div class="score-head"><span class="side-title">MATCH SCORE</span><span class="score-help">得点でサーブ権・配置を自動更新</span></div>
+   <div class="score-grid">
+    <div class="score-team ours"><button type="button" class="score-label serve-owner-control" data-serve-owner="us" title="自チームが最初にサーブする／サーブ権を修正">自チーム</button><div class="score-actions"><strong id="scoreUs">0</strong><button type="button" data-score-team="us" data-score-change="1" aria-label="自チームの得点を増やす">＋</button></div></div>
+    <div class="score-team theirs"><button type="button" class="score-label serve-owner-control" data-serve-owner="them" title="相手が最初にサーブする／サーブ権を修正">相手</button><div class="score-actions"><strong id="scoreThem">0</strong><button type="button" data-score-team="them" data-score-change="1" aria-label="相手の得点を増やす">＋</button></div></div>
+   </div>
+  </section>
+  <section class="side-panel serve-panel" aria-label="サーブ記録"><div class="serve-head"><div class="side-title">◉ サーブ</div><select class="server-select" id="serverSelect" aria-label="サーブ担当者"></select></div><div class="serve-note">得点＋でサーブ権を更新。相手サーブから得点すると自動ローテ。</div><div class="serve-actions" id="serveActions"></div></section>
+ </aside>
+</div>
+<section class="live-screen" id="liveView" hidden aria-label="ライブマッチデータ">
+ <div class="live-top"><div><div class="live-eyebrow">LIVE MATCH ANALYTICS</div><h2>リアルタイム試合データ <span id="liveSetLabel">1 SET</span></h2></div><div class="live-top-right"><span class="live-score" id="liveScore">自チーム 0 – 0 相手</span><div class="live-scope"><button type="button" data-live-scope="set" class="active">このセット</button><button type="button" data-live-scope="all">全セット</button></div></div></div>
+ <div class="live-kpis" id="liveKpis"></div>
+ <div class="live-main">
+  <section class="live-table-panel"><div class="live-card-head"><strong>PLAYER PERFORMANCE</strong><span>選手別の記録 ｜ 得点は手動集計</span></div><div class="live-table-wrap"><table class="live-table"><thead><tr><th>選手 / ポジション</th><th>スパイク打数</th><th>決定</th><th>スパイク効果率</th><th>サーブ効果率</th><th>レセプ成功率</th></tr></thead><tbody id="liveBody"></tbody></table></div><div class="live-table-foot">効果率・成功率は自動計算（記録0本は「—」）。計算式とCSVは「詳細」から。</div></section>
+  <div class="live-insights"><section class="live-insight-panel"><div class="live-card-head"><strong>TEAM BREAKDOWN</strong><span>プレーの内訳</span></div><div class="breakdown" id="liveBreakdown"></div></section><section class="live-insight-panel"><div class="live-card-head"><strong>RECENT PLAYS</strong><span>直近の記録</span></div><div class="live-feed" id="liveFeed"></div></section></div>
+ </div>
+</section>
+<footer class="footer"><div class="footer-left"><button type="button" id="undoBtn" aria-label="直前の操作を1つ戻す" title="プレー・得点・選手交代・ローテーションなど直前の操作を取り消す">↶ 1つ戻す</button><span class="last" id="lastAction">未記録</span></div><span class="right">オフライン対応 ｜ 端末内に自動保存</span></footer>
+</div>
+<dialog class="modal" id="rosterDialog"><div class="modal-head"><h2>⚙ 選手・ポジション・コート配置</h2><button type="button" class="modal-close" data-close="rosterDialog">×</button></div><div class="modal-body"><p class="modal-desc">各選手に OH・MB・S・OP・L を設定できます。試合中の通常交代は右側の控え名簿から行ってください。ここでのコート配置編集は初期配置や修正用です。リベロは選択した1人のみ後衛で出場できます。</p><div class="roster-editor" id="editorRows"></div><div class="modal-actions" style="justify-content:flex-start"><button type="button" class="modal-btn" id="addPlayer">＋ 選手を追加</button><button type="button" class="modal-btn danger" id="resetRoster">↺ 選手登録をリセット</button></div><div class="modal-desc" style="margin:8px 0 0;font-size:11px">※ 登録リセットは選手・コート配置・試合記録を初期状態へ戻します（確認あり）。直後なら「1つ戻す」で復元できます。</p><div class="section-divider"></div><h3 class="section-subhead">コートに出す6人を選択</h3><div class="court-editor" id="courtEditor"></div><div class="modal-actions"><button class="modal-btn" data-close="rosterDialog">キャンセル</button><button class="modal-btn primary" id="saveRoster">変更を保存</button></div></div></dialog>
+<dialog class="modal swap-modal" id="swapDialog"><div class="modal-head"><h2>選手交代</h2><button type="button" class="modal-close" data-close="swapDialog">×</button></div><div class="modal-body"><p class="modal-desc" id="swapPrompt">交代するコート位置を選択</p><div class="swap-options" id="swapOptions"></div><p class="modal-desc" style="margin-top:12px">※ リベロは後衛のOH・MB・S・OPと交代できます。前衛に進む直前に交代元の選手が自動復帰します。通常交代で下がった選手は、再度「選手交代」をするまで戻りません。</p><div class="modal-actions"><button type="button" class="modal-btn" data-close="swapDialog">キャンセル</button></div></div></dialog>
+<dialog class="modal" id="statsDialog"><div class="modal-head"><h2>▤ 選手別の成績・プレー履歴</h2><button type="button" class="modal-close" data-close="statsDialog">×</button></div><div class="modal-body"><div class="scope-switch"><button type="button" data-scope="set">このセット</button><button type="button" data-scope="all">全セット</button><span style="margin-left:auto;font-size:11px;color:#607b89">選手ごとの本数を自動集計</span></div><div class="table-wrap"><table class="stats-table"><thead><tr><th rowspan="2">選手 (位置)</th><th colspan="6">スパイク</th><th colspan="2">ブロック</th><th colspan="7">サーブ</th><th colspan="8">レセプション・レシーブミス</th></tr><tr><th>打数</th><th>決定</th><th>ミス</th><th>旧*</th><th>決定率</th><th>効果率</th><th>ポイント</th><th>タッチ</th><th>打数</th><th>ノー</th><th>エース</th><th>効果</th><th>ミス</th><th>エース率</th><th>効果率</th><th>レセプ本数</th><th>A</th><th>B</th><th>C</th><th>レセプミス</th><th>レシーブミス</th><th>旧*</th><th>成功率</th></tr></thead><tbody id="statsBody"></tbody><tfoot id="statsFoot"></tfoot></table></div><div class="rate-guide" aria-label="集計率の計算方法"><strong>効果率・成功率の計算方法（小数第1位）</strong><div>スパイク決定率 ＝ 決定 ÷ 打数 × 100</div><div>スパイク効果率 ＝（決定 − ミス）÷ 打数 × 100</div><div>サーブ効果率 ＝（エース × 100 ＋ 効果 × 25 − ミス × 25）÷ 打数</div><div>レセプション成功率 ＝（A × 100 ＋ B × 50）÷（A ＋ B ＋ C ＋ レセプションミス）</div><small>打数が0なら「—」。スパイク打数は「打数」ボタンでのみ加算。被ブロックは専用項目がないため「スパイクミス」に含めて記録してください。レセプション A・B・C・ミスはサーブレシーブの判定です。新設の「レシーブミス」はラリー中の守備ミスで、レセプション成功率には含めません。「旧*」の分類不明な記録はレセプション成功率の分母にも含めません。</small></div><h3 class="section-subhead" style="margin-top:14px">直近の記録</h3><div class="history-list" id="historyList"></div><div class="modal-actions"><button class="modal-btn" data-close="statsDialog">閉じる</button><button type="button" class="modal-btn primary" id="exportCsv">↓ CSVを保存</button></div></div></dialog>
+<dialog class="modal" id="toolsDialog"><div class="modal-head"><h2>⋯ 保存・試合管理</h2><button type="button" class="modal-close" data-close="toolsDialog">×</button></div><div class="modal-body"><p class="modal-desc">データはこの端末のブラウザ内に保存されます。別の端末への移動や、ブラウザのデータ削除に備えてバックアップしてください。</p><div class="modal-actions" style="justify-content:flex-start"><button type="button" class="modal-btn primary" id="exportCsvTools">↓ 成績CSV</button><button type="button" class="modal-btn" id="backupBtn">↓ バックアップ保存</button><button type="button" class="modal-btn" id="importBtn">↑ バックアップ復元</button></div><div class="section-divider"></div><p class="modal-desc">現在のセットの記録を消去したり、新しい試合を始められます。操作の前にバックアップをおすすめします。</p><div class="modal-actions" style="justify-content:flex-start"><button class="modal-btn danger" id="clearSet">今のセットの記録を消去</button><button class="modal-btn danger" id="newMatch">新しい試合を始める</button></div></div></dialog>
+<input id="importFile" type="file" accept=".json,application/json" hidden>
+<div class="toast" id="toast" aria-live="polite"></div>
+<script>
+(()=>{'use strict';
+const KEY='volley-track-v1',ROLES=['OH','MB','S','OP','L'],ZONES=[4,3,2,1,6,5],SPIKE=['attempt','decide','miss'],BLOCK=['point','touch'],SERVE=['attempt','no','ace','effect','miss'],RECEIVE=['A','B','C','miss','digMiss'],OPPONENT=['spike','ace','block','miss'];
+const $=id=>document.getElementById(id);
+const makeId=()=> 'id'+Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+const today=()=>{let d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const labels={spike:'スパイク',block:'ブロック',serve:'サーブ',receive:'レセプション',attempt:'打数',decide:'決定',miss:'ミス',digMiss:'守備ミス',point:'ポイント',touch:'タッチ',no:'ノー',ace:'エース',effect:'効果',A:'A',B:'B',C:'C',success:'旧成功',error:'旧ミス',kill:'旧決定',in:'旧イン'};
+function blank(){const players=Array.from({length:14},(_,i)=>({id:makeId(),number:String(i+1),name:i<6?'選手'+(i+1):i<12?'控え'+(i-5):'リベロ'+(i-11),position:i>=12?'L':['OH','MB','S','OP','MB','OH'][i%6]}));return {version:9,date:today(),opponent:'',sets:[1],activeSet:1,scope:'set',liveScope:'set',players,events:[],courtBySet:{1:Object.fromEntries([1,2,3,4,5,6].map(n=>[n,players[n-1].id]))},rotationBySet:{1:0},serverOverrideBySet:{},scoreBySet:{1:{us:0,them:0}},servingBySet:{1:'us'},liberoPairsBySet:{1:{}},liberoPreferenceBySet:{1:{}},selectedLiberoBySet:{1:players[12].id},opponentPlaysBySet:{1:{spike:0,ace:0,block:0,miss:0}},normalBenchBySet:{1:[]},rallyHistoryBySet:{1:[]}}}
+function validState(d){if(!d||typeof d!=='object'||!Array.isArray(d.players)||d.players.length<1||d.players.length>100||!d.players.every(p=>p&&typeof p.id==='string'&&typeof p.name==='string'&&typeof p.number==='string')||!Array.isArray(d.sets)||d.sets.length<1||d.sets.length>20||!d.sets.every(x=>Number.isInteger(x)&&x>0)||!d.sets.includes(d.activeSet)||!Array.isArray(d.events)||d.events.length>1000000)return false;return d.events.every(e=>e&&typeof e.id==='string'&&typeof e.playerId==='string'&&Number.isInteger(e.set)&&((e.type==='spike'&&[...SPIKE,...BLOCK,'A','B','C','success','error','kill','in'].includes(e.outcome))||(e.type==='block'&&BLOCK.includes(e.outcome))||(e.type==='receive'&&[...RECEIVE,'success','error'].includes(e.outcome))||(e.type==='serve'&&SERVE.includes(e.outcome))))}
+function normalize(d){const oldVersion=d.version||1;d.version=9;if(oldVersion<9){for(const e of d.events||[]){if(e.type==='spike'&&(e.outcome==='decide'||e.outcome==='miss'))e.legacySpikeImplicitAttempt=true}}d.players=d.players.map(p=>({...p,position:ROLES.includes(p.position)?p.position:'OH'}));if(oldVersion<4){const courtIds=new Set(Object.values(d.courtBySet?.[d.activeSet]||{}));let reserves=d.players.filter(p=>p.position!=='L'&&!courtIds.has(p.id)).length;let liberos=d.players.filter(p=>p.position==='L').length;while(reserves<6&&d.players.length<50){let i=reserves+1;d.players.push({id:makeId(),number:String(d.players.length+1),name:'控え'+i,position:'OH'});reserves++}while(liberos<2&&d.players.length<50){let i=liberos+1;d.players.push({id:makeId(),number:String(d.players.length+1),name:'リベロ'+i,position:'L'});liberos++}}d.scoreBySet=d.scoreBySet&&typeof d.scoreBySet==='object'?d.scoreBySet:{};d.liveScope=d.liveScope==='all'?'all':'set';d.servingBySet=d.servingBySet&&typeof d.servingBySet==='object'?d.servingBySet:{};d.liberoPairsBySet=d.liberoPairsBySet&&typeof d.liberoPairsBySet==='object'?d.liberoPairsBySet:{};d.liberoPreferenceBySet=d.liberoPreferenceBySet&&typeof d.liberoPreferenceBySet==='object'?d.liberoPreferenceBySet:{};d.selectedLiberoBySet=d.selectedLiberoBySet&&typeof d.selectedLiberoBySet==='object'?d.selectedLiberoBySet:{};d.opponentPlaysBySet=d.opponentPlaysBySet&&typeof d.opponentPlaysBySet==='object'?d.opponentPlaysBySet:{};d.rallyHistoryBySet=d.rallyHistoryBySet&&typeof d.rallyHistoryBySet==='object'?d.rallyHistoryBySet:{};d.normalBenchBySet=d.normalBenchBySet&&typeof d.normalBenchBySet==='object'?d.normalBenchBySet:{};d.courtBySet=d.courtBySet&&typeof d.courtBySet==='object'?d.courtBySet:{};d.rotationBySet=d.rotationBySet&&typeof d.rotationBySet==='object'?d.rotationBySet:{};d.serverOverrideBySet=d.serverOverrideBySet&&typeof d.serverOverrideBySet==='object'?d.serverOverrideBySet:{};d.scope=d.scope==='all'?'all':'set';d.date=String(d.date||today());d.opponent=String(d.opponent||'');for(const n of d.sets){const court=d.courtBySet[n]||{};const ids=new Set(),playerIds=new Set(d.players.map(p=>p.id));for(let zone=1;zone<=6;zone++){const id=Object.prototype.hasOwnProperty.call(court,zone)?court[zone]:(d.players[zone-1]?.id||'');court[zone]=playerIds.has(id)&&!ids.has(id)?id:'';if(court[zone])ids.add(court[zone])}d.courtBySet[n]=court;d.rotationBySet[n]=Number.isInteger(d.rotationBySet[n])?Math.max(0,d.rotationBySet[n]):0;if(!playerIds.has(d.serverOverrideBySet[n]))delete d.serverOverrideBySet[n];const score=d.scoreBySet[n]||{};d.scoreBySet[n]={us:Math.max(0,Math.floor(Number(score.us)||0)),them:Math.max(0,Math.floor(Number(score.them)||0))};
+ d.servingBySet[n]=d.servingBySet[n]==='them'?'them':'us';const os=d.opponentPlaysBySet[n]||{};d.opponentPlaysBySet[n]=Object.fromEntries(OPPONENT.map(k=>[k,Number.isFinite(Number(os[k]))?Math.min(999,Math.max(0,Math.floor(Number(os[k])))):0]));
+ // The pair always refers to the exact player relieved by a libero, regardless of position.
+ // NEVER select an unrelated substitute from the bench to repair an incomplete pair.
+ const pairs=d.liberoPairsBySet[n]||{},validPairs={};for(const [libero,replaced] of Object.entries(pairs)){if(d.players.some(p=>p.id===libero&&p.position==='L')&&d.players.some(p=>p.id===replaced&&p.position!=='L')&&Object.values(court).includes(libero)&&!Object.values(court).includes(replaced))validPairs[libero]=replaced}d.liberoPairsBySet[n]=validPairs;
+ const pref=d.liberoPreferenceBySet[n]||{},validPref={};for(const [replaced,libero] of Object.entries(pref)){if(d.players.some(p=>p.id===replaced&&p.position!=='L')&&d.players.some(p=>p.id===libero&&p.position==='L'))validPref[replaced]=libero}d.liberoPreferenceBySet[n]=validPref;
+ const held=d.normalBenchBySet[n];d.normalBenchBySet[n]=[...new Set(Array.isArray(held)?held:[])].filter(id=>d.players.some(p=>p.id===id&&p.position!=='L')&&!Object.values(court).includes(id));
+ const history=d.rallyHistoryBySet[n];d.rallyHistoryBySet[n]=Array.isArray(history)?history.slice(-120).filter(h=>h&&['us','them'].includes(h.team)&&h.before&&typeof h.before==='object'):[];
+ // Enforce a single selected libero. Recover only the EXACT paired player if known.
+ // Unpaired/invalid legacy liberos leave an empty slot for manual correction;
+ // automatically pulling a random reserve onto the court would break substitutions.
+ const liberos=d.players.filter(p=>p.position==='L');
+ const onCourtLiberos=Object.values(court).filter(id=>liberos.some(p=>p.id===id));
+ const choice=d.selectedLiberoBySet[n];
+ const selected=liberos.some(p=>p.id===choice)?choice:(onCourtLiberos[0]||liberos[0]?.id||'');
+ d.selectedLiberoBySet[n]=selected;
+ let seen=false;
+ for(const z of [1,2,3,4,5,6]){
+  const id=court[z];if(!liberos.some(p=>p.id===id))continue;
+  const partner=d.liberoPairsBySet[n][id];
+  const partnerAvailable=partner&&playerIds.has(partner)&&!Object.values(court).includes(partner);
+  if(id!==selected||seen||[2,3,4].includes(z)||!partnerAvailable){
+   court[z]=partnerAvailable?partner:'';
+   delete d.liberoPairsBySet[n][id];
+  }else seen=true;
+ }
+ // A player who left via a regular substitution stays on the bench.
+ d.normalBenchBySet[n]=d.normalBenchBySet[n].filter(id=>!Object.values(court).includes(id));
+ };return d}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));return validState(d)?normalize(d):blank()}catch{return blank()}}
+let data=load(),draftPlayers=[],draftCourt={},timer;
+// The court stores official rotation zones; the tactical formation only changes how cards are drawn.
+let roleLayout=true;
+// One shared history for every data-changing button. A snapshot includes
+// player records, serving rights, rally history, bench, libero pairs, scores,
+// selected set, and all six court positions. Navigation-only buttons are not
+// part of the undo history. Nothing is stored outside the existing device.
+const undoStack=[];
+let lastSavedState=JSON.stringify(data);
+function updateUndoButton(){const b=$('undoBtn');if(b)b.disabled=undoStack.length===0}
+function undoOne(){
+ const previous=undoStack.pop();if(!previous)return;
+ data=normalize(JSON.parse(previous.state));lastSavedState=JSON.stringify(data);
+ try{localStorage.setItem(KEY,lastSavedState)}catch{notify('復元した内容を保存できませんでした。バックアップを保存してください')}
+ $('opponent').value=data.opponent;$('matchDate').value=data.date;
+ renderAll();notify('「'+previous.note+'」を取り消しました');
+}
+const currentCourt=()=>data.courtBySet[data.activeSet];
+function notify(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1700)}
+function save(note='直前の操作',recordUndo=true){
+ const next=JSON.stringify(data);
+ if(next!==lastSavedState){
+  if(recordUndo){undoStack.push({state:lastSavedState,note});if(undoStack.length>60)undoStack.shift()}
+  lastSavedState=next;
+ }
+ try{localStorage.setItem(KEY,next)}catch{notify('保存できません。バックアップをお取りください')}
+ updateUndoButton();
+}
+function fresh(){return {spike:{attempt:0,decide:0,miss:0,old:0},block:{point:0,touch:0},receive:{A:0,B:0,C:0,miss:0,digMiss:0,old:0,total:0},serve:{attempt:0,no:0,ace:0,effect:0,miss:0}}}
+function accum(s,e){if(e.type==='spike'){if(BLOCK.includes(e.outcome))s.block[e.outcome]++;else if(SPIKE.includes(e.outcome)){if(e.outcome==='attempt'||e.legacySpikeImplicitAttempt)s.spike.attempt++;if(e.outcome!=='attempt')s.spike[e.outcome]++}else s.spike.old++}else if(e.type==='block'){if(BLOCK.includes(e.outcome))s.block[e.outcome]++}else if(e.type==='serve'){s.serve.attempt++;if(e.outcome!=='attempt')s.serve[e.outcome]++}else if(e.type==='receive'){if(e.outcome==='digMiss'){s.receive.digMiss++}else{s.receive.total++;if(RECEIVE.includes(e.outcome))s.receive[e.outcome]++;else if(e.outcome==='error')s.receive.miss++;else s.receive.old++}}}
+function aggregate(evs){const s=fresh();for(const e of evs)accum(s,e);return s}
+// 認定されている記録方法に基づくサーブ・レセプションの率と、
+// 決定からミス（被ブロックを含めて入力）を差し引くスパイク効果率。
+// 打数・受数が0のときは「—」とし、誤解を防ぐ。
+function rateValue(n,d){return d>0?Math.round(n/d*1000)/10:null}
+function rateDisplay(v){return v===null?'—':v.toFixed(1)+'%'}
+function rateCsv(v){return v===null?'':v}
+function spikeKillRate(s){return rateValue(s.spike.decide,s.spike.attempt)}
+function spikeEffectRate(s){return rateValue(s.spike.decide-s.spike.miss,s.spike.attempt)}
+function serveAceRate(s){return rateValue(s.serve.ace,s.serve.attempt)}
+function serveEffectRate(s){return rateValue(s.serve.ace+s.serve.effect*.25-s.serve.miss*.25,s.serve.attempt)}
+function receptionSuccessRate(s){const r=s.receive;return rateValue(r.A+r.B*.5,r.A+r.B+r.C+r.miss)}
+const currentEvents=()=>data.events.filter(e=>e.set===data.activeSet);
+const relevantEvents=()=>data.scope==='all'?data.events:currentEvents();
+const playerOf=id=>data.players.find(p=>p.id===id);
+const positionOf=id=>Object.keys(currentCourt()).find(k=>currentCourt()[k]===id)||'—';
+function renderSetControl(){$('setSelect').innerHTML=data.sets.map(s=>`<option value="${s}" ${s===data.activeSet?'selected':''}>${s}セット</option>`).join('');$('addSet').disabled=data.sets.length>=10;$('rotationCount').textContent='／ ローテーション '+(data.rotationBySet[data.activeSet]||0)+'回';$('rotateBack').disabled=!data.rotationBySet[data.activeSet]}
+function actionButton(p,type,key,s){let val=type==='receive'?s.receive[key]:s[type][key],c=type==='spike'?(key==='attempt'?'hit':key):type==='block'?key:type==='serve'?(key==='attempt'?'serves-attempt':key):'grade-'+key;
+ if(key==='miss')c='miss';if(key==='digMiss')c='dig-miss';return `<button type="button" class="act ${c}" data-action="1" data-pid="${esc(p.id)}" data-type="${type}" data-outcome="${key}" aria-label="${esc(p.name)}の${type==='receive'&&key==='miss'?'レセプションミス':labels[type]+' '+labels[key]}"><span>${type==='receive'&&key==='miss'?'ミス':type==='receive'&&key==='digMiss'?'守備ミス':labels[key]}</span><small>${val}</small></button>`}
+// Tactical 3-front / 3-back visual positions. Rotation, service, and libero
+// substitution always use the unchanged numbered court zones (1-6).
+// Requested preferences: OH front-left/back-centre; MB front-centre/back-left;
+// S/OP front-right/back-left. When preferences collide, only the display
+// falls back to an unused slot in the SAME row; MB wins the back-left tie.
+function formationForCourt(){
+ const result={};
+ const rows=[[4,3,2],[5,6,1]];
+ const allPermutations=a=>a.length===1?[a]:a.flatMap((item,index)=>allPermutations(a.filter((_,i)=>i!==index)).map(rest=>[item,...rest]));
+ for(const slots of rows){
+  const isFront=slots.includes(4);
+  const choices=allPermutations(slots);
+  let bestScore=-Infinity,best=null;
+  for(const physical of choices){
+   let score=0;
+   for(let i=0;i<slots.length;i++){
+    const rotationZone=slots[i];
+    const p=playerOf(currentCourt()[rotationZone]);
+    if(!p){score+=(physical[i]===rotationZone?3:0);continue}
+    // A libero takes the preferred position of the player it replaced.
+    const replaced=p.position==='L'?playerOf(data.liberoPairsBySet[data.activeSet]?.[p.id]):null;
+    const role=replaced?.position||p.position;
+    const preference=isFront?{
+      OH:[4,3,2],MB:[3,4,2],S:[2,3,4],OP:[2,3,4],L:[3,4,2]
+    }:{
+      OH:[6,5,1],MB:[5,6,1],S:[5,1,6],OP:[5,1,6],L:[5,6,1]
+    };
+    const ranked=preference[role]||slots;
+    const preferenceIndex=ranked.indexOf(physical[i]);
+    const mainPriority=role==='MB'?100:role==='OH'?90:75;
+    score+=preferenceIndex===0?mainPriority:preferenceIndex===1?24:9;
+    // Stable, deterministic layout for same-role players and odd lineups.
+    if(physical[i]===rotationZone)score+=2;
+   }
+   if(score>bestScore){bestScore=score;best=physical}
+  }
+  slots.forEach((actualZone,i)=>result[actualZone]=best[i]);
+ }
+ return result;
+}
+function playerCard(zone,lookup,displayZone=zone){const pid=currentCourt()[zone],p=playerOf(pid);if(!p)return `<article class="player-card empty zone-${displayZone}" data-zone="${zone}" data-display-zone="${displayZone}">位置${zone}　未配置</article>`;const s=lookup.get(p.id)||fresh();let serverZone=zone===1;return `<article class="player-card zone-${displayZone}${serverZone?' serving':''}" data-zone="${zone}" data-display-zone="${displayZone}" data-card-player="${esc(p.id)}" title="ローテーション位置 ${zone}／表示位置 ${displayZone}">${p.position==='L'?'<div class="stat-block libero-blank" aria-label="リベロは上段の記録対象外"></div>':`<div class="stat-block attack"><div class="block-head"><span>▲ スパイク・ブロック</span><span class="tiny-hint">${s.spike.attempt}打数</span></div><div class="action-row ${[2,3,4].includes(zone)?'five':'three'}">${SPIKE.map(key=>actionButton(p,'spike',key,s)).join('')}${[2,3,4].includes(zone)?BLOCK.map(key=>actionButton(p,'block',key,s)).join(''):''}</div></div>`}<div class="player-id"><span class="zone-num" title="ローテーション上の位置">${roleLayout?'R':''}${zone}</span><span class="number">${esc(p.number||'—')}</span><div class="player-detail"><div class="player-name" title="${esc(p.name)}">${esc(p.name)}</div><div class="player-role">${esc(p.position)}</div></div>${serverZone?'<span class="serve-chip">S</span>':''}</div><div class="stat-block receive"><div class="block-head"><span>▼ レセプション／守備ミス</span><span class="tiny-hint">${s.receive.total}本</span></div><div class="action-row five">${RECEIVE.map(key=>actionButton(p,'receive',key,s)).join('')}</div></div></article>`}
+function renderCourt(){const evs=currentEvents(),lookup=new Map(data.players.map(p=>[p.id,fresh()]));for(const e of evs){const s=lookup.get(e.playerId);if(s)accum(s,e)}const visual=roleLayout?formationForCourt():Object.fromEntries([1,2,3,4,5,6].map(z=>[z,z]));$('courtGrid').innerHTML=ZONES.map(z=>playerCard(z,lookup,visual[z])).join('');const toggle=$('layoutToggle');if(toggle){toggle.textContent=roleLayout?'役割配置':'ローテ配置';toggle.setAttribute('aria-pressed',String(roleLayout));toggle.title=roleLayout?'表示はポジション優先。R番号は実際のローテ位置。押すとローテ配置へ':'番号どおりの表示。押すと役割配置へ'}}
+function serverId(){const override=data.serverOverrideBySet[data.activeSet];return data.players.some(p=>p.id===override)?override:currentCourt()[1]||''}
+function renderServe(){let onCourt=[...new Set([1,2,3,4,5,6].map(z=>currentCourt()[z]).filter(Boolean))];let sel=serverId();$('serverSelect').innerHTML=onCourt.map(id=>{const p=playerOf(id);return `<option value="${esc(id)}" ${id===sel?'selected':''}>#${esc(p?.number||'—')} ${esc(p?.name||'選手')}</option>`}).join('');let p=playerOf(sel);const s=p?aggregate(currentEvents().filter(e=>e.playerId===p.id)):fresh();$('serveActions').innerHTML=SERVE.map(key=>p?actionButton(p,'serve',key,s):`<button class="act serves-attempt" disabled>${labels[key]}</button>`).join('')}
+function renderSummary(){const previous=undoStack.at(-1);const last=data.events.at(-1);
+ if(previous)$('lastAction').textContent='直前：'+previous.note;
+ else if(last){const p=playerOf(last.playerId);$('lastAction').textContent=`${last.set}セット ｜ ${p?.name||'選手'}・${labels[last.type]} ${labels[last.outcome]||last.outcome}`}
+ else $('lastAction').textContent='まだ記録がありません';
+ updateUndoButton();
+}
+
+
+// Record the actual player that the libero replaces. Normal substitutions are
+// separate: a player benched normally cannot return through any automatic action.
+function rallyState(){const n=data.activeSet;data.servingBySet[n]??='us';data.liberoPairsBySet[n]??={};data.liberoPreferenceBySet[n]??={};data.selectedLiberoBySet??={};data.selectedLiberoBySet[n]??=data.players.find(p=>p.position==='L')?.id||'';data.normalBenchBySet??={};data.normalBenchBySet[n]??=[];data.rallyHistoryBySet[n]??=[]}
+function invalidateRallyUndo(){rallyState();data.rallyHistoryBySet[data.activeSet]=[]}
+function scoreSnapshot(){rallyState();const n=data.activeSet;return {court:{...currentCourt()},rotation:data.rotationBySet[n]||0,serving:data.servingBySet[n],pairs:{...data.liberoPairsBySet[n]},preferences:{...data.liberoPreferenceBySet[n]},selectedLibero:data.selectedLiberoBySet[n]||'',normalBench:[...data.normalBenchBySet[n]],serverOverride:data.serverOverrideBySet[n]||'',score:{...data.scoreBySet[n]}}}
+function restoreScoreSnapshot(b){const n=data.activeSet;data.courtBySet[n]={...b.court};data.rotationBySet[n]=b.rotation;data.servingBySet[n]=b.serving;data.liberoPairsBySet[n]={...b.pairs};if(b.preferences)data.liberoPreferenceBySet[n]={...b.preferences};if(b.selectedLibero)data.selectedLiberoBySet[n]=b.selectedLibero;if(b.normalBench)data.normalBenchBySet[n]=[...b.normalBench];data.scoreBySet[n]={...b.score};if(b.serverOverride)data.serverOverrideBySet[n]=b.serverOverride;else delete data.serverOverrideBySet[n]}
+function pairedPlayerFor(liberoId){rallyState();return data.liberoPairsBySet[data.activeSet][liberoId]||''}
+function liberoLeave(liberoId){rallyState();const originalId=pairedPlayerFor(liberoId),original=playerOf(originalId);const zone=Number(Object.keys(currentCourt()).find(z=>currentCourt()[z]===liberoId));if(!zone||!original||original.position==='L'||Object.values(currentCourt()).includes(originalId))return false;currentCourt()[zone]=originalId;delete data.liberoPairsBySet[data.activeSet][liberoId];delete data.serverOverrideBySet[data.activeSet];return true}
+function liberoEnter(liberoId,replacedId){rallyState();const libero=playerOf(liberoId),replaced=playerOf(replacedId),zone=Number(Object.keys(currentCourt()).find(z=>currentCourt()[z]===replacedId));if(!libero||libero.position!=='L'||liberoId!==data.selectedLiberoBySet[data.activeSet]||!replaced||replaced.position==='L'||!zone||Object.values(currentCourt()).some(id=>playerOf(id)?.position==='L')||![1,5,6].includes(zone))return false;currentCourt()[zone]=liberoId;data.liberoPairsBySet[data.activeSet][liberoId]=replacedId;data.liberoPreferenceBySet[data.activeSet][replacedId]=liberoId;delete data.serverOverrideBySet[data.activeSet];return true}
+function chooseFreeLibero(){rallyState();const selected=data.selectedLiberoBySet[data.activeSet];if(Object.values(currentCourt()).some(id=>playerOf(id)?.position==='L'))return '';return playerOf(selected)?.position==='L'?selected:''}
+// Check before changing the rotation. A corrupt legacy state should NOT
+// cause an unrelated bench player to appear on court.
+function canRotate(dir){rallyState();const before={...currentCourt()};for(let i=0;i<ZONES.length;i++){const to=ZONES[i],from=ZONES[(i-dir+ZONES.length)%ZONES.length],id=before[from];if([2,3,4].includes(to)&&playerOf(id)?.position==='L'){
+  const partner=pairedPlayerFor(id);if(!partner||!playerOf(partner)||playerOf(partner).position==='L'||Object.values(before).includes(partner))return false;
+ }}return true}
+function liberoFrontRowExits(){rallyState();const swapped=[];for(const zone of [4,3,2]){
+ const liberoId=currentCourt()[zone];if(playerOf(liberoId)?.position!=='L')continue;
+ if(liberoLeave(liberoId))swapped.push(playerOf(currentCourt()[zone])?.name||'交代元');
+ }return swapped}
+function rotationStep(dir){if(!canRotate(dir))return null;const before={...currentCourt()};for(let i=0;i<ZONES.length;i++){const z=ZONES[i];const from=ZONES[(i-dir+ZONES.length)%ZONES.length];currentCourt()[z]=before[from]||''}data.rotationBySet[data.activeSet]=Math.max(0,(data.rotationBySet[data.activeSet]||0)+dir);delete data.serverOverrideBySet[data.activeSet];return liberoFrontRowExits()}
+function addRallyPoint(team){rallyState();const n=data.activeSet,s=data.scoreBySet[n],wasServing=data.servingBySet[n];if(s[team]>=999)return;const before=scoreSnapshot();let message='';s[team]++;
+ if(team==='us'){
+  if(wasServing==='them'){const exits=rotationStep(1);if(exits===null){s[team]--;return notify('リベロの交代元が不明です。選手・配置を確認してください')}message='サーブ権獲得 → 自動ローテーション';if(exits.length)message+='・リベロ交代元が復帰'}
+  data.servingBySet[n]='us';
+ }else{
+  if(wasServing==='us'){
+   const servingMb=playerOf(currentCourt()[1]);
+   if(servingMb?.position==='MB'&&serverId()===servingMb.id){const liberoId=chooseFreeLibero();if(liberoId&&liberoEnter(liberoId,servingMb.id))message=`${servingMb.name} → ${playerOf(liberoId).name}（自動L交代）`}
+  }
+  data.servingBySet[n]='them';
+ }
+ const history=data.rallyHistoryBySet[n];history.push({team,before});if(history.length>120)history.shift();save((team==='us'?'自チーム':'相手')+'の得点＋1');renderAll();notify(message||`${team==='us'?'自チーム':'相手'}に1点`)
+}
+function renderRoster(){const onCourt=new Set(Object.values(currentCourt()).filter(Boolean));const reserves=data.players.filter(p=>p.position!=='L'&&!onCourt.has(p.id));const liberos=data.players.filter(p=>p.position==='L');const held=new Set(data.normalBenchBySet[data.activeSet]||[]);const member=p=>p?`<button type="button" class="squad-member" data-bench-player="${esc(p.id)}" title="${esc(p.name)} をコートに交代で戻す"><strong>#${esc(p.number||'—')} ${esc(p.name)}</strong><small>${esc(p.position)}${held.has(p.id)?' · 交代待ち':''}</small></button>`:`<button type="button" class="squad-member empty-slot" disabled><strong>— 空き —</strong></button>`;
+ const selected=data.selectedLiberoBySet[data.activeSet];
+ const libero=p=>p?`<div class="libero-tile ${selected===p.id?'libero-selected':'libero-not-selected'}" title="${esc(p.name)}"><div class="squad-member libero ${onCourt.has(p.id)?'active-player':''} ${selected===p.id?'':'unselected'}"><strong>#${esc(p.number||'—')} ${esc(p.name)}</strong><small>${onCourt.has(p.id)?'出場中':selected===p.id?'使用L':'非選択'}・L</small></div><div class="libero-controls"><button type="button" class="libero-select-btn ${selected===p.id?'selected':''}" data-libero-select="${esc(p.id)}" aria-pressed="${selected===p.id}" title="このリベロを出場対象にする">${selected===p.id?'✓選択':'選択'}</button><button type="button" class="libero-swap-btn ${onCourt.has(p.id)?'active':''}" data-libero-swap="${esc(p.id)}" ${selected===p.id?'':'disabled'} title="${esc(p.name)}のリベロ交代">交代</button></div></div>`:`<div class="libero-tile"><div class="squad-member empty-slot"><strong>— 空き —</strong></div></div>`;
+ $('benchGrid').innerHTML=Array.from({length:6},(_,i)=>member(reserves[i])).join('');$('liberoGrid').innerHTML=Array.from({length:2},(_,i)=>libero(liberos[i])).join('')}
+function renderOpponent(){const scores=data.opponentPlaysBySet[data.activeSet]||{spike:0,ace:0,block:0,miss:0};const names={spike:'スパイク',ace:'エース',block:'ブロック',miss:'ミス'};
+ $('opponentGrid').innerHTML=OPPONENT.map(key=>`<div class="opponent-stat"><span class="opponent-stat-label">${names[key]}</span><div class="opponent-stat-control"><strong>${scores[key]||0}</strong><button type="button" class="plus" data-opponent="${key}" data-delta="1" aria-label="相手${names[key]}を1増やす">＋</button></div></div>`).join('')}
+function renderScore(){const s=data.scoreBySet[data.activeSet]||{us:0,them:0};$('scoreUs').textContent=s.us;$('scoreThem').textContent=s.them;const owner=data.servingBySet[data.activeSet]||'us';for(const btn of document.querySelectorAll('[data-serve-owner]')){const isOwner=btn.dataset.serveOwner===owner;btn.classList.toggle('serving-now',isOwner);btn.setAttribute('aria-pressed',String(isOwner))} $('liveScore').textContent=`自チーム ${s.us} – ${s.them} 相手${data.liveScope==='all'?'（現在セット）':''}`}
+function renderLive(){const evs=data.liveScope==='all'?data.events:currentEvents(),s=aggregate(evs),score=data.scoreBySet[data.activeSet]||{us:0,them:0};$('liveSetLabel').textContent=data.liveScope==='all'?'ALL SETS':data.activeSet+' SET';document.querySelectorAll('[data-live-scope]').forEach(b=>{b.classList.toggle('active',b.dataset.liveScope===data.liveScope);b.setAttribute('aria-pressed',String(b.dataset.liveScope===data.liveScope))});const kpis=[['スパイク効果率',rateDisplay(spikeEffectRate(s))],['サーブ効果率',rateDisplay(serveEffectRate(s))],['レセプション成功率',rateDisplay(receptionSuccessRate(s))],['スパイク決定',s.spike.decide],['ブロック得点',s.block.point],['サーブエース',s.serve.ace]];$('liveKpis').innerHTML=kpis.map(([label,num])=>`<div class="live-kpi"><span>${label}</span><strong>${num}</strong></div>`).join('');const by=new Map(data.players.map(p=>[p.id,fresh()]));for(const e of evs){const t=by.get(e.playerId);if(t)accum(t,e)}const onCourt=new Set(Object.values(currentCourt()));const ranked=[...data.players].sort((a,b)=>Number(onCourt.has(b.id))-Number(onCourt.has(a.id))||((by.get(b.id)?.spike.attempt||0)+(by.get(b.id)?.receive.total||0)+(by.get(b.id)?.serve.attempt||0))-((by.get(a.id)?.spike.attempt||0)+(by.get(a.id)?.receive.total||0)+(by.get(a.id)?.serve.attempt||0)));$('liveBody').innerHTML=ranked.map(p=>{const st=by.get(p.id),tag=onCourt.has(p.id)?`P${positionOf(p.id)}`:'控え';return `<tr><td>#${esc(p.number||'—')} ${esc(p.name)} <small>${esc(p.position)} · ${tag}</small></td><td>${st.spike.attempt}</td><td>${st.spike.decide}</td><td class="rate-cell">${rateDisplay(spikeEffectRate(st))}</td><td class="rate-cell">${rateDisplay(serveEffectRate(st))}</td><td class="rate-cell">${rateDisplay(receptionSuccessRate(st))}</td></tr>`}).join('');let bars=[['スパイク',s.spike.attempt],['レセプション',s.receive.total],['守備ミス',s.receive.digMiss],['サーブ',s.serve.attempt],['ミス',s.spike.miss+s.receive.miss+s.receive.digMiss+s.serve.miss]];const max=Math.max(1,...bars.map(x=>x[1]));$('liveBreakdown').innerHTML=bars.map(([name,count])=>`<div class="break-row"><span>${name}</span><div class="break-track"><div class="break-fill" style="width:${count/max*100}%"></div></div><strong>${count}</strong></div>`).join('');$('liveFeed').innerHTML=evs.slice(-5).reverse().map(e=>{const p=playerOf(e.playerId);return `<div class="feed-line"><span>${esc(p?.name||'選手')} · ${esc(labels[e.type]||e.type)}</span><b>${esc(labels[e.outcome]||e.outcome)}</b></div>`}).join('')||'<p class="modal-desc">まだ記録がありません。</p>'}
+function renderAll(){renderSetControl();renderCourt();renderRoster();renderOpponent();renderScore();renderServe();renderSummary();renderLive();if($('statsDialog').open)renderStats()}
+function addEvent(pid,type,outcome,button){const p=playerOf(pid);if(!p||(type==='spike'&&!SPIKE.includes(outcome))||(type==='block'&&!BLOCK.includes(outcome))||(type==='serve'&&!SERVE.includes(outcome))||(type==='receive'&&!RECEIVE.includes(outcome))||!['serve','receive','spike','block'].includes(type))return;if(type==='block'&&!(Object.entries(currentCourt()).some(([z,id])=>id===pid&&[2,3,4].includes(Number(z)))&&p.position!=='L'))return;data.events.push({id:makeId(),set:data.activeSet,playerId:pid,type,outcome,time:new Date().toISOString()});save(p.name+'の'+labels[type]+'・'+labels[outcome]);renderCourt();renderServe();renderSummary();if(!$('liveView').hidden)renderLive();if($('statsDialog').open)renderStats();notify(`${p.name}：${labels[type]} ${labels[outcome]} ＋1`);if(navigator.vibrate)navigator.vibrate(9)}
+function rotate(dir){const exits=rotationStep(dir);if(exits===null)return notify('リベロの交代元が不明なため回転できません。選手・配置を確認してください');invalidateRallyUndo();save(dir>0?'ローテーション':'逆回転');renderAll();notify((dir>0?'時計回りにローテーションしました':'ローテーションを1回戻しました')+(exits.length?'・リベロの交代元が自動復帰':''))}
+function renderStats(){document.querySelectorAll('[data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===data.scope));const evs=relevantEvents();let counts=new Map(data.players.map(p=>[p.id,fresh()]));for(const e of evs){let s=counts.get(e.playerId);if(s)accum(s,e)};const cells=s=>{const sp=s.spike,bl=s.block,sv=s.serve,r=s.receive;return [sp.attempt,sp.decide,sp.miss,sp.old,rateDisplay(spikeKillRate(s)),rateDisplay(spikeEffectRate(s)),bl.point,bl.touch,sv.attempt,sv.no,sv.ace,sv.effect,sv.miss,rateDisplay(serveAceRate(s)),rateDisplay(serveEffectRate(s)),r.total,r.A,r.B,r.C,r.miss,r.digMiss,r.old,rateDisplay(receptionSuccessRate(s))].map((v,i)=>`<td${[4,5,13,14,22].includes(i)?' class="rate-cell"':''}>${v}</td>`).join('')};$('statsBody').innerHTML=data.players.map(p=>`<tr><td>#${esc(p.number)} ${esc(p.name)}（${esc(p.position)}／${positionOf(p.id)}）</td>${cells(counts.get(p.id))}</tr>`).join('');$('statsFoot').innerHTML=`<tr><td>チーム合計</td>${cells(aggregate(evs))}</tr>`;
+ const h=currentEvents().slice(-30).reverse();$('historyList').innerHTML=h.length?h.map(e=>{const p=playerOf(e.playerId);return `<div class="history-row"><span>#${esc(p?.number||'—')} ${esc(p?.name||'選手')}　${esc(labels[e.type]||e.type)}</span><b>${esc(labels[e.outcome]||e.outcome)}</b><button class="history-delete" data-delete="${esc(e.id)}" aria-label="この記録を消去">×</button></div>`}).join(''):'<p class="modal-desc">まだ記録がありません。</p>'}
+function renderEditor(){const rows=$('editorRows');rows.innerHTML=draftPlayers.map(p=>`<div class="edit-row" data-edit="${esc(p.id)}"><input class="edit-number" maxlength="4" value="${esc(p.number)}" aria-label="背番号"><input class="edit-name" maxlength="30" value="${esc(p.name)}" aria-label="選手名"><select class="edit-position" aria-label="ポジション">${ROLES.map(role=>`<option ${p.position===role?'selected':''}>${role}</option>`).join('')}</select><button type="button" class="remove-edit" data-remove="${esc(p.id)}" aria-label="選手削除">×</button></div>`).join('');$('courtEditor').innerHTML=[4,3,2,5,6,1].map(zone=>`<div class="court-slot"><label>位置 ${zone}</label><select data-court-zone="${zone}"><option value="">— 未配置 —</option>${draftPlayers.map(p=>`<option value="${esc(p.id)}" ${draftCourt[zone]===p.id?'selected':''}>#${esc(p.number||'—')} ${esc(p.name||'選手')}</option>`).join('')}</select></div>`).join('')}
+function syncDraft(){for(const row of $('editorRows').querySelectorAll('[data-edit]')){const p=draftPlayers.find(p=>p.id===row.dataset.edit);if(p){p.number=row.querySelector('.edit-number').value.slice(0,4);p.name=row.querySelector('.edit-name').value.slice(0,30);p.position=row.querySelector('.edit-position').value}}for(const field of $('courtEditor').querySelectorAll('[data-court-zone]'))draftCourt[field.dataset.courtZone]=field.value}
+function openDialog(id){$(id).showModal()}
+function csvSafe(v){let s=String(v??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+function download(name,content,mime){const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function exportCsv(){const header=['試合日','対戦相手','セット','背番号','選手名','ポジション','スパイク打数','スパイク決定','スパイクミス','旧スパイク記録','スパイク決定率(%)','スパイク効果率(%)','ブロックポイント','ブロックタッチ','サーブ打数','サーブノー','サーブエース','サーブ効果','サーブミス','サーブエース率(%)','サーブ効果率(%)','レセプション本数','レセプションA','レセプションB','レセプションC','レセプションミス','レシーブミス','旧レシーブ記録','レセプション成功率(%)','自チーム得点','相手得点','相手スパイク','相手エース','相手ブロック','相手ミス'];const rows=[header];function add(set,p,evs){const s=aggregate(evs),sp=s.spike,sv=s.serve,r=s.receive;rows.push([data.date,data.opponent,set,p.number,p.name,p.position,sp.attempt,sp.decide,sp.miss,sp.old,rateCsv(spikeKillRate(s)),rateCsv(spikeEffectRate(s)),s.block.point,s.block.touch,sv.attempt,sv.no,sv.ace,sv.effect,sv.miss,rateCsv(serveAceRate(s)),rateCsv(serveEffectRate(s)),r.total,r.A,r.B,r.C,r.miss,r.digMiss,r.old,rateCsv(receptionSuccessRate(s)),...(typeof set==='number'?[data.scoreBySet[set]?.us||0,data.scoreBySet[set]?.them||0,...OPPONENT.map(k=>data.opponentPlaysBySet[set]?.[k]||0)]:['','','','','',''])])}for(const set of data.sets)for(const p of data.players)add(set,p,data.events.filter(e=>e.set===set&&e.playerId===p.id));for(const p of data.players)add('全セット',p,data.events.filter(e=>e.playerId===p.id));download('バレー成績_'+(data.date||today())+'.csv','\ufeff'+rows.map(r=>r.map(csvSafe).join(',')).join('\r\n'),'text/csv;charset=utf-8');notify('成績CSVを保存しました')}
+let activeView='record',pendingSwap='',swapMode='normal';
+function switchView(view){activeView=view;$('recordView').hidden=view!=='record';$('liveView').hidden=view!=='live';for(const [id,active] of [['recordTab',view==='record'],['liveTab',view==='live']]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',String(active))}if(view==='live')renderLive()}
+function openSwap(id){swapMode='normal';const p=playerOf(id);if(!p)return;if(Object.values(currentCourt()).includes(id))return notify('この選手はすでに出場中です');if(p.position==='L')return notify('リベロは専用の「交代」ボタンを使用してください');pendingSwap=id;$('swapPrompt').textContent='#'+(p.number||'—')+' '+p.name+' と通常交代するコートの選手を選択';const options=[4,3,2,5,6,1].filter(z=>playerOf(currentCourt()[z])?.position!=='L');$('swapOptions').innerHTML=options.map(z=>{const old=playerOf(currentCourt()[z]);return `<button class="swap-item" type="button" data-swap-zone="${z}"><strong>位置 ${z}</strong><small>#${esc(old?.number||'—')} ${esc(old?.name||'未配置')} → 交代</small></button>`}).join('');if(!options.length)return notify('交代できるコートの位置がありません');openDialog('swapDialog')}
+function openLiberoSwap(id){const p=playerOf(id);if(!p||p.position!=='L')return;if(id!==data.selectedLiberoBySet[data.activeSet])return notify('先に「選択」を押して使用するリベロを切り替えてください');if(Object.values(currentCourt()).includes(id)){
+ if(liberoLeave(id)){invalidateRallyUndo();save('リベロの交代解除');renderAll();notify(p.name+' → 交代元の選手が復帰しました')}else notify('交代元の選手が確認できません。選手・配置から調整してください');return
+ }
+ swapMode='libero';pendingSwap=id;const candidates=[5,6,1].filter(z=>{const player=playerOf(currentCourt()[z]);return player&&player.position!=='L'});
+ if(!candidates.length)return notify('交代できる後衛の選手がいません');
+ $('swapPrompt').textContent='#'+(p.number||'—')+' '+p.name+' と交代する後衛の選手を選択';$('swapOptions').innerHTML=candidates.map(z=>{const original=playerOf(currentCourt()[z]);return `<button class="swap-item" type="button" data-swap-zone="${z}"><strong>位置 ${z} / ${esc(original.position)}</strong><small>#${esc(original.number||'—')} ${esc(original.name)}</small></button>`}).join('');openDialog('swapDialog')}
+$('recordTab').addEventListener('click',()=>switchView('record'));
+$('liveTab').addEventListener('click',()=>switchView('live'));
+document.querySelector('.score-panel').addEventListener('click',e=>{const owner=e.target.closest('[data-serve-owner]');if(owner){const team=owner.dataset.serveOwner;if(!['us','them'].includes(team))return;data.servingBySet[data.activeSet]=team;invalidateRallyUndo();save('サーブ権を'+(team==='us'?'自チーム':'相手')+'に設定');renderAll();notify((team==='us'?'自チーム':'相手')+'にサーブ権を設定しました');return}
+ const btn=e.target.closest('[data-score-team]');if(!btn)return;const team=btn.dataset.scoreTeam,delta=Number(btn.dataset.scoreChange);if(!['us','them'].includes(team)||delta!==1)return;addRallyPoint(team)});
+$('opponentGrid').addEventListener('click',e=>{const btn=e.target.closest('[data-opponent]');if(!btn)return;const key=btn.dataset.opponent,delta=Number(btn.dataset.delta);if(!OPPONENT.includes(key)||delta!==1)return;const stat=data.opponentPlaysBySet[data.activeSet];stat[key]=Math.min(999,Math.max(0,(stat[key]||0)+delta));save('相手'+({spike:'スパイク',ace:'エース',block:'ブロック',miss:'ミス'}[key])+'＋1');renderOpponent();renderSummary();notify('相手'+({spike:'スパイク',ace:'エース',block:'ブロック',miss:'ミス'}[key])+'：'+stat[key]+'回');});
+$('benchGrid').addEventListener('click',e=>{const b=e.target.closest('[data-bench-player]');if(b)openSwap(b.dataset.benchPlayer)});
+$('liberoGrid').addEventListener('click',e=>{const pick=e.target.closest('[data-libero-select]');if(pick){const id=pick.dataset.liberoSelect,p=playerOf(id);if(!p||p.position!=='L')return;
+ const selected=data.selectedLiberoBySet[data.activeSet];if(selected===id)return;
+ const playing=Object.values(currentCourt()).find(cid=>playerOf(cid)?.position==='L');
+ if(playing&&playing!==id&&!liberoLeave(playing))return notify('出場中のリベロを先に交代元の選手へ戻してください');
+ data.selectedLiberoBySet[data.activeSet]=id;invalidateRallyUndo();save('出場リベロの選択');renderAll();notify(p.name+' を出場リベロに選択しました');return}
+ const swap=e.target.closest('[data-libero-swap]');if(swap)openLiberoSwap(swap.dataset.liberoSwap)});
+$('swapOptions').addEventListener('click',e=>{const b=e.target.closest('[data-swap-zone]');if(!b||!playerOf(pendingSwap))return;const zone=Number(b.dataset.swapZone);if(zone<1||zone>6)return;
+ if(swapMode==='libero'){
+  const replacedId=currentCourt()[zone];if(!liberoEnter(pendingSwap,replacedId))return notify('後衛の選手とリベロを交代できませんでした');
+ }else{
+  // Regular substitutions ONLY: a normally-benched player never returns by rotation.
+  const replaced=currentCourt()[zone],incoming=playerOf(pendingSwap);
+  if(!incoming||incoming.position==='L'||playerOf(replaced)?.position==='L')return notify('リベロの交代は専用のボタンから行ってください');
+  if(Object.values(currentCourt()).includes(pendingSwap))return notify('この選手はすでにコート上にいます');
+  rallyState();const held=new Set(data.normalBenchBySet[data.activeSet]);held.delete(pendingSwap);
+  if(replaced&&playerOf(replaced)?.position!=='L')held.add(replaced);
+  data.normalBenchBySet[data.activeSet]=[...held];
+  currentCourt()[zone]=pendingSwap;delete data.serverOverrideBySet[data.activeSet];
+ }
+ invalidateRallyUndo();save(swapMode==='libero'?'リベロ交代':'選手交代');$('swapDialog').close();renderAll();notify('位置'+zone+' の選手を交代しました')});
+$('liveView').addEventListener('click',e=>{const b=e.target.closest('[data-live-scope]');if(!b)return;data.liveScope=b.dataset.liveScope;save('集計範囲の変更',false);renderLive()});
+// Event handling, stable delegation even when player cards are re-rendered
+$('courtGrid').addEventListener('click',e=>{const button=e.target.closest('[data-action]');if(button)addEvent(button.dataset.pid,button.dataset.type,button.dataset.outcome,button)});
+$('serveActions').addEventListener('click',e=>{const button=e.target.closest('[data-action]');if(button)addEvent(button.dataset.pid,button.dataset.type,button.dataset.outcome,button)});
+$('layoutToggle').addEventListener('click',()=>{roleLayout=!roleLayout;renderCourt();notify(roleLayout?'役割ごとの表示に切り替えました':'ローテーション順の表示に切り替えました')});
+$('rotate').addEventListener('click',()=>rotate(1));$('rotateBack').addEventListener('click',()=>{if(data.rotationBySet[data.activeSet]>0)rotate(-1)});
+$('setSelect').addEventListener('change',e=>{data.activeSet=Number(e.target.value);save('セットの切り替え');renderAll()});$('addSet').addEventListener('click',()=>{if(data.sets.length>=10)return;const n=Math.max(...data.sets)+1;data.courtBySet[n]={...currentCourt()};data.rotationBySet[n]=0;data.scoreBySet[n]={us:0,them:0};data.servingBySet[n]='us';data.liberoPairsBySet[n]={...data.liberoPairsBySet[data.activeSet]};data.liberoPreferenceBySet[n]={...data.liberoPreferenceBySet[data.activeSet]};data.selectedLiberoBySet[n]=data.selectedLiberoBySet[data.activeSet];data.normalBenchBySet[n]=[...(data.normalBenchBySet[data.activeSet]||[])];data.opponentPlaysBySet[n]={spike:0,ace:0,block:0,miss:0};data.rallyHistoryBySet[n]=[];data.sets.push(n);data.activeSet=n;save(n+'セットの追加');renderAll();notify(n+'セットを追加しました')});
+$('serverSelect').addEventListener('change',e=>{data.serverOverrideBySet[data.activeSet]=e.target.value;invalidateRallyUndo();save('サーブ担当者の変更');renderServe();renderSummary()});
+$('undoBtn').addEventListener('click',undoOne);
+$('openStats').addEventListener('click',()=>{renderStats();openDialog('statsDialog')});$('openTools').addEventListener('click',()=>openDialog('toolsDialog'));
+$('editPlayers').addEventListener('click',()=>{draftPlayers=data.players.map(p=>({...p}));draftCourt={...currentCourt()};renderEditor();openDialog('rosterDialog')});
+$('resetRoster').addEventListener('click',()=>{if(!confirm('選手の登録情報・コート配置・得点・プレー記録をすべて初期状態に戻します。\n試合の記録も消去されます。実行しますか？\n※ 直後なら「1つ戻す」で復元できます。'))return;data=blank();$('opponent').value=data.opponent;$('matchDate').value=data.date;save('選手登録と試合全体のリセット');draftPlayers=data.players.map(p=>({...p}));draftCourt={...currentCourt()};renderAll();renderEditor();$('rosterDialog').close();notify('選手登録を初期状態に戻しました')});
+$('addPlayer').addEventListener('click',()=>{syncDraft();if(draftPlayers.length>=50)return notify('登録できる選手は50人までです');draftPlayers.push({id:makeId(),number:'',name:'',position:'OH'});renderEditor();$('editorRows').lastElementChild.querySelector('.edit-name').focus()});
+$('editorRows').addEventListener('click',e=>{const btn=e.target.closest('[data-remove]');if(!btn)return;syncDraft();if(data.events.some(ev=>ev.playerId===btn.dataset.remove))return notify('記録のある選手は削除できません');if(draftPlayers.length<=1)return notify('選手は1人以上必要です');draftPlayers=draftPlayers.filter(p=>p.id!==btn.dataset.remove);for(let z=1;z<=6;z++)if(draftCourt[z]===btn.dataset.remove)draftCourt[z]='';renderEditor()});
+$('saveRoster').addEventListener('click',()=>{syncDraft();if(draftPlayers.some(p=>!p.name.trim()))return notify('選手名を入力してください');const chosen=Object.values(draftCourt).filter(Boolean);if(new Set(chosen).size!==chosen.length)return notify('同じ選手を複数の位置に配置できません');const courtLs=chosen.filter(id=>draftPlayers.find(p=>p.id===id)?.position==='L');if(courtLs.length>1)return notify('コート上にリベロは1人までです');
+if([2,3,4].some(z=>draftPlayers.find(p=>p.id===draftCourt[z])?.position==='L'))return notify('リベロは前衛（2・3・4）に配置できません');
+const selected=data.selectedLiberoBySet[data.activeSet];if(courtLs.length===1&&selected!==courtLs[0])return notify('出場させるリベロを名簿の「選択」で指定してください');
+const pairs={};if(courtLs.length){const id=courtLs[0],oldPairs=data.liberoPairsBySet[data.activeSet]||{};
+const candidate=oldPairs[id];
+if(!candidate||!draftPlayers.some(p=>p.id===candidate&&p.position!=='L')||chosen.includes(candidate))return notify('リベロの交代元が分からなくなります。リベロを一度戻してから配置を変更してください');pairs[id]=candidate}
+data.players=draftPlayers.map(p=>({...p,number:p.number.trim(),name:p.name.trim()}));for(const set of data.sets){if(set!==data.activeSet){for(let z=1;z<=6;z++)if(!data.players.some(p=>p.id===data.courtBySet[set][z]))data.courtBySet[set][z]=''}}data.courtBySet[data.activeSet]={...draftCourt};delete data.serverOverrideBySet[data.activeSet];data.liberoPairsBySet[data.activeSet]=pairs;data.normalBenchBySet[data.activeSet]=(data.normalBenchBySet[data.activeSet]||[]).filter(id=>!chosen.includes(id));data=normalize(data);invalidateRallyUndo();save('選手名簿・コート配置の編集');renderAll();$('rosterDialog').close();notify('選手とコート配置を更新しました')});
+$('statsDialog').addEventListener('click',e=>{const btn=e.target.closest('[data-scope]');if(btn){data.scope=btn.dataset.scope;save('詳細表示範囲の変更',false);renderStats();return}const del=e.target.closest('[data-delete]');if(del){data.events=data.events.filter(v=>v.id!==del.dataset.delete);save('プレー履歴の削除');renderAll();notify('記録を1件削除しました')}});
+for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>$(b.dataset.close).close());
+$('opponent').value=data.opponent;$('matchDate').value=data.date;
+$('opponent').addEventListener('input',e=>{data.opponent=e.target.value;save('対戦相手名の変更',false)});$('matchDate').addEventListener('change',e=>{data.date=e.target.value;save('試合日の変更')});
+$('exportCsv').addEventListener('click',exportCsv);$('exportCsvTools').addEventListener('click',exportCsv);
+$('backupBtn').addEventListener('click',()=>{download('バレー記録バックアップ_'+data.date+'.json',JSON.stringify(data,null,2),'application/json;charset=utf-8');notify('バックアップを保存しました')});
+$('importBtn').addEventListener('click',()=>$('importFile').click());$('importFile').addEventListener('change',async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{if(file.size>50000000)throw new Error('ファイルが大きすぎます');const imported=JSON.parse(await file.text());if(!validState(imported))throw new Error('データ形式が正しくありません');if(!confirm('バックアップを復元しますか？ 現在の記録は上書きされます。'))return;data=normalize(imported);save('バックアップからの復元');$('opponent').value=data.opponent;$('matchDate').value=data.date;renderAll();$('toolsDialog').close();notify('バックアップを復元しました')}catch(err){notify('復元できません：'+err.message)}});
+$('clearSet').addEventListener('click',()=>{const n=data.activeSet;if(!confirm(n+'セットの記録を消しますか？ 直後なら「1つ戻す」で復元できます。'))return;data.events=data.events.filter(e=>e.set!==n);invalidateRallyUndo();save('セット記録の消去');renderAll();notify(n+'セットを消去しました')});
+$('newMatch').addEventListener('click',()=>{if(!confirm('新しい試合を始めますか？ 記録は消去され、選手名とポジションは残ります。'))return;const lineup={...currentCourt()};data={...data,date:today(),opponent:'',sets:[1],activeSet:1,scope:'set',events:[],courtBySet:{1:lineup},rotationBySet:{1:0},serverOverrideBySet:{},scoreBySet:{1:{us:0,them:0}},servingBySet:{1:'us'},liberoPairsBySet:{1:{...data.liberoPairsBySet[data.activeSet]}},liberoPreferenceBySet:{1:{...data.liberoPreferenceBySet[data.activeSet]}},selectedLiberoBySet:{1:data.selectedLiberoBySet[data.activeSet]},normalBenchBySet:{1:[]},opponentPlaysBySet:{1:{spike:0,ace:0,block:0,miss:0}},rallyHistoryBySet:{1:[]},liveScope:'set'};$('opponent').value='';$('matchDate').value=data.date;save('新しい試合の開始');renderAll();$('toolsDialog').close();notify('新しい試合を開始しました')});
+renderAll();
+})();
+</script>
+</body>
+</html>
